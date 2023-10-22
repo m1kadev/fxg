@@ -1,0 +1,16 @@
+= Heading 1 =
+== Heading 2 ==
+=== Heading 3 ===
+==== Heading 4 ====
+===== Heading 5 =====
+====== Heading 6 ======
+
+//italic//
+!!bold!!
+<https://tagsdev.nl/ My website!>
+<!/dog.png Dog>
+[[ No formatting here! ]]
+
+This text will be on
+
+different lines.
