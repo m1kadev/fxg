@@ -1,5 +1,3 @@
-use logos::Logos;
-
 use crate::lexer::{Lexeme, Lexer};
 
 // fn parse_eq1(lexer: &mut Lexer) -> Option<DocumentNode> {
@@ -102,7 +100,7 @@ impl DocumentNode {
             Self::Link { text, href: to } => {
                 output.push_str("<a href=\"");
                 output.push_str(to);
-                output.push('>');
+                output.push_str("\">");
 
                 for node in text {
                     node.as_html(output);
@@ -115,6 +113,8 @@ impl DocumentNode {
                 output.push_str("<img src=\"");
                 output.push_str(src);
                 output.push_str("\" alt=\"");
+                output.push_str(alt);
+                output.push_str("\" title=\"");
                 output.push_str(alt);
                 output.push_str("\">");
             }
@@ -160,7 +160,8 @@ impl Document {
 
             Lexeme::LAngle => Self::parse_link(lexer),
             Lexeme::LAngleBang => Self::parse_img(lexer),
-            Lexeme::LDoubleAngleBrace => Self::parse_raw(lexer),
+
+            Lexeme::LNAngleBrace => Self::parse_raw(lexer),
 
             Lexeme::Text => {
                 lexer.next();
@@ -170,7 +171,7 @@ impl Document {
                 lexer.next();
                 Some(DocumentNode::LineBreak)
             }
-            _ => unreachable!(),
+            lexeme => panic!("Unexpected token: {lexeme:?}"),
         }
     }
 
@@ -188,33 +189,53 @@ impl Document {
     // <https://tagsdev.nl/ My website!>
     fn parse_link(lexer: &mut Lexer) -> Option<DocumentNode> {
         assert_eq!(lexer.next()?, Lexeme::LAngle);
-        if let Some(Lexeme::Text) = lexer.next() {
-            let slice = lexer.slice();
-            let mut split = slice.split(' ');
-            let href = split.next()?.to_string();
-            let text_raw = split.remainder()?;
-            let text = Document::build(&mut Lexer::lex(text_raw)).nodes;
-            Some(DocumentNode::Link { text, href })
-        } else {
-            None
+        let mut tag_contents = String::new();
+        loop {
+            if lexer.peek()? == &Lexeme::RAngle {
+                lexer.next();
+                break;
+            }
+            lexer.next();
+            tag_contents.push_str(lexer.slice());
         }
+        println!("{}", tag_contents);
+        let mut split = tag_contents.split(' ');
+        let href = split.next()?.to_string();
+        let text_raw = split.remainder()?;
+        let text = Document::build(&mut Lexer::lex(text_raw)).nodes;
+        Some(DocumentNode::Link { text, href })
     }
 
     // <!/dog.png Dog>
     fn parse_img(lexer: &mut Lexer) -> Option<DocumentNode> {
         assert_eq!(lexer.next()?, Lexeme::LAngleBang);
-        if let Some(Lexeme::Text) = lexer.next() {
-            let slice = lexer.slice();
-            let mut split = slice.split(' ');
-            let src = split.next()?.to_string();
-            let alt = split.remainder()?.to_string();
-            Some(DocumentNode::Image { alt, src })
-        } else {
-            None
+        let mut tag_contents = String::new();
+        loop {
+            if lexer.peek()? == &Lexeme::RAngle {
+                lexer.next();
+                break;
+            }
+            lexer.next();
+            tag_contents.push_str(lexer.slice());
         }
+        println!("{}", tag_contents);
+        let mut split = tag_contents.split(' ');
+        let src = split.next()?.to_string();
+        let alt = split.remainder()?.to_string();
+        Some(DocumentNode::Image { src, alt })
     }
 
     fn parse_raw(lexer: &mut Lexer) -> Option<DocumentNode> {
-        None
+        assert_eq!(lexer.next()?, Lexeme::LNAngleBrace);
+        let count = lexer.slice().len();
+        let mut txt = String::new();
+        loop {
+            let token = lexer.next()?;
+            if token == Lexeme::RNAngleBrace && lexer.slice().len() == count {
+                break;
+            }
+            txt.push_str(lexer.slice());
+        }
+        Some(DocumentNode::Text(txt))
     }
 }

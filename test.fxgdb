@@ -1,0 +1,60 @@
+= - Eq1 0..1
+ Heading 1  - Text 11..12
+= - Eq1 12..13
+== - Eq2 15..17
+ Heading 2  - Text 27..28
+== - Eq2 28..30
+=== - Eq3 32..35
+ Heading 3  - Text 45..46
+=== - Eq3 46..49
+==== - Eq4 51..55
+ Heading 4  - Text 65..66
+==== - Eq4 66..70
+===== - Eq5 72..77
+ Heading 5  - Text 87..88
+===== - Eq5 88..93
+====== - Eq6 95..101
+ Heading 6  - Text 111..112
+====== - Eq6 112..118
+
+
+ - Newline 118..122
+// - DoubleSlash 122..124
+italic - Text 129..130
+// - DoubleSlash 130..132
+  - Text 132..133
+!! - DoubleBang 133..135
+bold - Text 138..139
+!! - DoubleBang 139..141
+  - Text 141..142
+< - LAngle 142..143
+https: - Text 148..149
+// - DoubleSlash 149..151
+tagsdev.nl/ My website! - Text 173..174
+> - RAngle 174..175
+
+
+ - Newline 175..179
+<! - LAngleBang 179..181
+https: - Text 186..187
+// - DoubleSlash 187..189
+hips.hearstapps.com/hmg-prod/images/chow-chow-portrait-royalty-free-image-1652926953.jpg?crop - Text 281..282
+= - Eq1 282..283
+0.44455xw:1xh;center,top&resize - Text 313..314
+= - Eq1 314..315
+980:* Dog - Text 323..324
+> - RAngle 324..325
+
+
+ - Newline 325..329
+[[ - LNAngleBrace 329..331
+ No formatting here!  - Text 351..352
+]] - RNAngleBrace 352..354
+
+
+ - Newline 354..358
+This text will be on - Text 377..378
+
+
+ - Newline 378..382
+different lines. - Text 397..398

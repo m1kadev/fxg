@@ -29,6 +29,13 @@ pub enum Subcommands {
         #[arg(short, long)]
         output: String,
     },
+
+    #[cfg(debug_assertions)]
+    VomitDebug {
+        file: String,
+        #[arg(short, long)]
+        output: String,
+    },
 }
 
 #[derive(Debug)]
@@ -43,10 +50,21 @@ impl From<io::Error> for Error {
     }
 }
 
-fn main() -> Result<(), Error> {
-    let args = Fxg::parse().subcommand;
-
+#[cfg(debug_assertions)]
+fn do_cli(args: Subcommands) -> Result<(), Error> {
     use Subcommands::*;
+    match args {
+        Build {
+            file,
+            template,
+            output,
+        } => build(&file, &template, &output),
+        VomitDebug { file, output } => vomit_debug(&file, &output),
+    }
+}
+
+#[cfg(not(debug_assertions))]
+fn do_cli(args: Subcommands) -> Result<(), Error> {
     match args {
         Build {
             file,
@@ -56,10 +74,16 @@ fn main() -> Result<(), Error> {
     }
 }
 
+fn main() -> Result<(), Error> {
+    let args = Fxg::parse().subcommand;
+    do_cli(args)
+}
+
 fn build(file: &str, template: &str, output: &str) -> Result<(), Error> {
     let data = fs::read_to_string(file)?;
     let mut lexer = Lexer::lex(&data);
     let document = Document::build(&mut lexer);
+
     let final_output = fs::read_to_string(template)?;
     if !final_output.contains("{{FGX_OUTPUT}}") {
         panic!();
@@ -71,5 +95,22 @@ fn build(file: &str, template: &str, output: &str) -> Result<(), Error> {
             .as_bytes(),
     )?;
 
+    Ok(())
+}
+
+#[cfg(debug_assertions)]
+fn vomit_debug(file: &str, output: &str) -> Result<(), Error> {
+    let data = fs::read_to_string(file)?;
+    let mut lexer = Lexer::lex(&data);
+    let mut output = File::create(output)?;
+    while let Some(lexeme) = lexer.next() {
+        writeln!(
+            output,
+            "{} - {:?} {:?}",
+            lexer.slice(),
+            lexeme,
+            lexer.span()
+        )?;
+    }
     Ok(())
 }

@@ -35,25 +35,24 @@ pub enum Lexeme {
     #[token("__")]
     DoubleUnderscore,
 
-    #[token(r"< *")]
+    #[token(r"<")]
     LAngle,
 
-    #[token("<! *")]
+    #[token("<!")]
     LAngleBang,
 
     #[token(r">")]
     RAngle,
 
-    #[token(r"[[")]
-    LDoubleAngleBrace,
+    #[regex(r"\[+")]
+    LNAngleBrace,
 
-    #[token(r"]]")]
-    RDoubleAngleBrace,
+    #[regex(r"\]+")]
+    RNAngleBrace,
 
-    #[regex(r"\n\n|\r\r|\r\n\r\n")]
+    #[regex(r"\n{2,}|\r{2,}|(\r\n){2,}")]
     Newline,
 
-    #[regex(r"https?://[a-z]+\.[a-z]+(/[a-z.\-%0-9]*)*")] // link
     Text,
 }
 
@@ -91,6 +90,10 @@ impl<'src> Lexer<'src> {
         } else {
             Some(&Lexeme::Text)
         }
+    }
+
+    pub fn span(&self) -> Range<usize> {
+        self.lexer.span()
     }
 }
 
