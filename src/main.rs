@@ -1,6 +1,10 @@
 // fuck it
 #![feature(str_split_remainder)]
 #![feature(const_mut_refs)]
+#![feature(iter_advance_by)]
+#![feature(step_trait)]
+
+use std::process::exit;
 
 use clap::{Parser, Subcommand};
 
@@ -9,9 +13,6 @@ mod error;
 
 use compiler::build;
 use error::Error;
-
-#[cfg(debug_assertions)]
-use compiler::vomit_debug;
 
 #[derive(Parser)]
 pub struct Fxg {
@@ -47,11 +48,15 @@ fn do_cli(args: Subcommands) -> Result<(), Error> {
             template,
             output,
         } => build(file, template, output),
-        VomitDebug { file, output } => vomit_debug(file, output),
+        #[cfg(debug_assertions)]
+        VomitDebug { file, output } => compiler::vomit_debug(file, output),
     }
 }
 
-fn main() -> Result<(), Error> {
+fn main() {
     let args = Fxg::parse().subcommand;
-    do_cli(args)
+    if let Err(e) = do_cli(args) {
+        println!("{}", e);
+        exit(-1);
+    }
 }

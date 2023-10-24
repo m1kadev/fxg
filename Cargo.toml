@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.4.6", features = ["derive"] }
+colored = "2.0.4"
 const_format = { version = "0.2.32", features = ["fmt"] }
 logos = "0.13.0"

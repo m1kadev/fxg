@@ -5,9 +5,12 @@
 ===== Heading 5 =====
 ====== Heading 6 ======
 
-//italic// !!bold!! <https://tagsdev.nl/ My website!>
+//italic// !!bold!!
 
-<!/static/dog.png Dog>
+<!/static/dog.png>
+
+<https://tagsdev.nl/>
+
 
 [[ No formatting here! ]]
 
