@@ -3,8 +3,6 @@ use std::ops::Range;
 
 use logos::Logos;
 
-// ? all regexes match " *" so that we dont get random spaces in the final html
-
 #[derive(Logos, Debug, PartialEq, Eq)]
 #[logos(skip r"[\r\t\n\f]+")]
 pub enum Lexeme {
@@ -62,6 +60,7 @@ pub struct Lexer<'src> {
     peekable: Peekable<logos::Lexer<'src, Lexeme>>,
 }
 
+// public functions
 impl<'src> Lexer<'src> {
     pub fn lex(source: &'src str) -> Self {
         let lexer = Lexeme::lexer(source);
@@ -97,6 +96,7 @@ impl<'src> Lexer<'src> {
     }
 }
 
+// private functions
 impl<'src> Lexer<'src> {
     fn find_error_chain(&mut self) {
         let begin = self.lexer.span().start;
