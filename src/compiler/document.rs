@@ -114,6 +114,18 @@ impl Document {
             if let Some(Lexeme::RAngle) = tok {
                 break;
             } else if tok.is_some() {
+                let lexeme = tok.unwrap();
+                if lexeme == Lexeme::LAngle || lexeme == Lexeme::LAngleBang {
+                    return Err(Error::ParsingError {
+                        message: format!(
+                            "Failed to find closing {:?} for this {:?}",
+                            Lexeme::RAngle,
+                            Lexeme::LAngle
+                        ),
+                        region,
+                        source: lexer.source().to_string(),
+                    });
+                }
                 tag_contents.push_str(lexer.slice());
             } else {
                 return Err(Error::ParsingError {
@@ -139,7 +151,7 @@ impl Document {
             });
         }
         if remainder.is_none() {
-            let whole_region = region.start..lexer.span().end;
+            let whole_region = region;
             return Err(Error::ParsingError {
                 message: "No link text was found for this link element.".to_string(),
                 region: whole_region,
@@ -163,6 +175,18 @@ impl Document {
             if lexeme == Some(Lexeme::RAngle) {
                 break;
             } else if lexeme.is_some() {
+                let lexeme = lexeme.unwrap();
+                if lexeme == Lexeme::LAngle || lexeme == Lexeme::LAngleBang {
+                    return Err(Error::ParsingError {
+                        message: format!(
+                            "Failed to find closing {:?} for this {:?}",
+                            Lexeme::RAngle,
+                            Lexeme::LAngleBang
+                        ),
+                        region,
+                        source: lexer.source().to_string(),
+                    });
+                }
                 tag_contents.push_str(lexer.slice());
             } else {
                 return Err(Error::ParsingError {
