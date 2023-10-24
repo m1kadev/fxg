@@ -2,11 +2,12 @@
 
 ## todo :)
 
-- add project shenanigans
+- add project management functions
 - add support for ogp embeds (see 1.)
-- improve error handling
+- improve "error handling" + add warnings (macro?)
+- clean up code, move stuff to different places
 
-1.: Syntax would be `{OGP_TITLE baslgasdhjgasd gasdgjklasd}` only allowed at the top of the document
+1.: Syntax would be some yaml delimited with `---` at the top of the file, if the file doesn't start with `---`, no metadata is generated
 
 ## Usage
 
