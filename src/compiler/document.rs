@@ -6,9 +6,9 @@ use crate::Error;
 macro_rules! parser_xtx {
     ($func:ident : $lexeme:ident => $node:ident) => {
         fn $func(lexer: &mut Lexer) -> Result<DocumentNode, Error> {
+            lexer.next();
             let mut nodes = vec![];
             let region = lexer.span();
-            dbg!(lexer.peek());
             loop {
                 match lexer.peek() {
                     Some(Lexeme::$lexeme) => {
@@ -60,7 +60,7 @@ impl Document {
     }
 
     fn parse_node(lexer: &mut Lexer) -> Result<DocumentNode, Error> {
-        let node = lexer.next();
+        let node = lexer.peek();
         if let Some(lexeme) = node {
             match lexeme {
                 Lexeme::Eq1 => Self::parse_eq1(lexer),
@@ -105,6 +105,7 @@ impl Document {
     parser_xtx!(parse_underline: DoubleUnderscore => Underline);
 
     fn parse_link(lexer: &mut Lexer) -> Result<DocumentNode, Error> {
+        lexer.next();
         let region = lexer.span();
 
         let mut tag_contents = String::new();
@@ -152,6 +153,8 @@ impl Document {
     }
 
     fn parse_img(lexer: &mut Lexer) -> Result<DocumentNode, Error> {
+        lexer.next();
+
         let region = lexer.span();
         let mut tag_contents = String::new();
 
@@ -195,6 +198,7 @@ impl Document {
     }
 
     fn parse_raw(lexer: &mut Lexer) -> Result<DocumentNode, Error> {
+        lexer.next();
         let count = lexer.slice().len();
         let mut text = String::new();
         let region = lexer.span();

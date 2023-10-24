@@ -129,6 +129,8 @@ impl Iterator for Lexer<'_> {
     fn next(&mut self) -> Option<Self::Item> {
         let item = self.next()?;
 
+        println!("{item:?}: {:?}", self.lexer.slice());
+
         if let Ok(lexeme) = item {
             self.slice_override = None;
             Some(lexeme)

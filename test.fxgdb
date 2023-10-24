@@ -1,18 +1,23 @@
 = - Eq1 0..1
  Heading 1  - Text 11..12
 = - Eq1 12..13
+
 == - Eq2 15..17
  Heading 2  - Text 27..28
 == - Eq2 28..30
+
 === - Eq3 32..35
  Heading 3  - Text 45..46
 === - Eq3 46..49
+
 ==== - Eq4 51..55
  Heading 4  - Text 65..66
 ==== - Eq4 66..70
+
 ===== - Eq5 72..77
  Heading 5  - Text 87..88
 ===== - Eq5 88..93
+
 ====== - Eq6 95..101
  Heading 6  - Text 111..112
 ====== - Eq6 112..118
