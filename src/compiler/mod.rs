@@ -14,7 +14,7 @@ pub use lexer::Lexer;
 pub fn build(file: &str, template: &str, output: &str) -> Result<(), Error> {
     let data = fs::read_to_string(file)?;
     let mut lexer = Lexer::lex(&data);
-    let document = Document::build(&mut lexer);
+    let document = Document::build(&mut lexer)?;
 
     let final_output = fs::read_to_string(template)?;
     if !final_output.contains("{{FGX_OUTPUT}}") {

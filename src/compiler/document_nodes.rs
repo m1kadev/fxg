@@ -1,6 +1,6 @@
 use const_format::formatc;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum DocumentNode {
     Header1(Vec<DocumentNode>),
     Header2(Vec<DocumentNode>),
@@ -25,6 +25,7 @@ pub enum DocumentNode {
     Text(String),
 
     LineBreak,
+    Eof,
 }
 
 impl DocumentNode {
@@ -71,6 +72,8 @@ impl DocumentNode {
             Self::LineBreak => html_tag!(<br/>),
 
             Self::Text(text) => output.push_str(text),
+
+            Self::Eof => {}
         }
     }
 }

@@ -94,6 +94,10 @@ impl<'src> Lexer<'src> {
     pub fn span(&self) -> Range<usize> {
         self.lexer.span()
     }
+
+    pub fn source(&self) -> &str {
+        self.lexer.source()
+    }
 }
 
 // private functions
