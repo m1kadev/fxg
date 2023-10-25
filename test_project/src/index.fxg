@@ -1,0 +1,34 @@
+---
+---
+title: "Index"
+ogp:
+  type: website
+  description: "New website"
+---
+
+
+= Heading 1 =
+== Heading 2 ==
+=== Heading 3 ===
+==== Heading 4 ====
+===== Heading 5 =====
+====== Heading 6 ======
+
+//italic// !!bold!! __underline__
+
+this is an image:
+<!/static/dog.png>
+
+this is an image with alt text:
+<!/static/dog.png Dog>
+
+This is a <https://github.com/zTags/fxg link>!
+
+[[ No formatting here! ]]
+
+This text will be on
+
+different lines.
+
+This text will be on
+the same line.

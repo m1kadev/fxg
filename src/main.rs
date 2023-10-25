@@ -4,12 +4,13 @@
 #![feature(iter_advance_by)]
 #![feature(step_trait)]
 
-use std::process::exit;
+use std::{env::current_dir, process::exit};
 
 use clap::{Parser, Subcommand};
 
 mod compiler;
 mod error;
+mod project;
 
 use compiler::build;
 use error::Error;
@@ -38,6 +39,10 @@ pub enum Subcommands {
         #[arg(short, long)]
         output: String,
     },
+
+    New {
+        folder: String,
+    },
 }
 
 fn do_cli(args: Subcommands) -> Result<(), Error> {
@@ -48,6 +53,13 @@ fn do_cli(args: Subcommands) -> Result<(), Error> {
             template,
             output,
         } => build(file, template, output),
+
+        New { folder } => {
+            let mut path = current_dir()?;
+            path.push(folder);
+            project::new(path)
+        }
+
         #[cfg(debug_assertions)]
         VomitDebug { file, output } => compiler::vomit_debug(file, output),
     }

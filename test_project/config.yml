@@ -1,0 +1,4 @@
+site_name: https://example.com
+site_folder: /
+source_folder: src
+static_folder: static
