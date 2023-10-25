@@ -1,7 +1,9 @@
-use crate::compiler::document_nodes::DocumentNode;
 use crate::compiler::lexer::Lexeme;
+use crate::compiler::nodes::DocumentNode;
 use crate::compiler::Lexer;
 use crate::Error;
+
+use super::header::DocumentHeader;
 
 macro_rules! parser_xtx {
     ($func:ident : $lexeme:ident => $node:ident) => {
@@ -17,7 +19,7 @@ macro_rules! parser_xtx {
                     }
                     Some(_) => nodes.push(Self::parse_node(lexer)?),
                     None => {
-                        return Err(Error::ParsingError {
+                        return Err(Error::Parsing {
                             message: format!(
                                 "Failed to find closing {:?} for this {:?}",
                                 Lexeme::$lexeme,
@@ -34,8 +36,7 @@ macro_rules! parser_xtx {
     };
 }
 
-#[derive(Default, Debug)]
-pub struct Document(Vec<DocumentNode>);
+pub struct Document(Vec<DocumentNode>, Option<DocumentHeader>);
 
 impl Document {
     pub fn as_html(&self) -> String {
@@ -46,17 +47,26 @@ impl Document {
         output
     }
 
-    pub fn build(lexer: &mut Lexer) -> Result<Self, Error> {
-        let mut this = Self::default();
+    pub fn header_html(&self) -> String {
+        let mut output = String::new();
+        if let Some(header) = &self.1 {
+            output.push_str(&format!("<title>{}</title>", &header.title));
+            output.push_str(&header.ogp.build_ogp(&header.title, "", ""));
+        }
+        output
+    }
+
+    pub fn build(mut lexer: Lexer) -> Result<Self, Error> {
+        let mut nodes = vec![];
         loop {
-            let node = Self::parse_node(lexer)?;
+            let node = Self::parse_node(&mut lexer)?;
             if node == DocumentNode::Eof {
                 break;
             } else {
-                this.0.push(node);
+                nodes.push(node);
             }
         }
-        Ok(this)
+        Ok(Self(nodes, lexer.header))
     }
 
     fn parse_node(lexer: &mut Lexer) -> Result<DocumentNode, Error> {
@@ -116,7 +126,7 @@ impl Document {
             } else if tok.is_some() {
                 let lexeme = tok.unwrap();
                 if lexeme == Lexeme::LAngle || lexeme == Lexeme::LAngleBang {
-                    return Err(Error::ParsingError {
+                    return Err(Error::Parsing {
                         message: format!(
                             "Failed to find closing {:?} for this {:?}",
                             Lexeme::RAngle,
@@ -128,7 +138,7 @@ impl Document {
                 }
                 tag_contents.push_str(lexer.slice());
             } else {
-                return Err(Error::ParsingError {
+                return Err(Error::Parsing {
                     message: format!(
                         "Failed to find closing {:?} for this {:?}",
                         Lexeme::RAngle,
@@ -144,7 +154,7 @@ impl Document {
         let remainder = split.remainder();
         if href.is_none() {
             let whole_region = region.start..lexer.span().end;
-            return Err(Error::ParsingError {
+            return Err(Error::Parsing {
                 message: "No href was found for this link element.".to_string(),
                 region: whole_region,
                 source: lexer.source().to_string(),
@@ -153,14 +163,14 @@ impl Document {
         if remainder.is_none() {
             let whole_region = region.start..lexer.span().end;
 
-            return Err(Error::ParsingError {
+            return Err(Error::Parsing {
                 message: "No link text was found for this link element.".to_string(),
                 region: whole_region,
                 source: lexer.source().to_string(),
             });
         }
         Ok(DocumentNode::Link {
-            text: Document::build(&mut Lexer::lex(remainder.unwrap()))?.0,
+            text: Document::build(Lexer::lex(remainder.unwrap())?)?.0,
             href: split.next().unwrap().to_string(),
         })
     }
@@ -178,7 +188,7 @@ impl Document {
             } else if lexeme.is_some() {
                 let lexeme = lexeme.unwrap();
                 if lexeme == Lexeme::LAngle || lexeme == Lexeme::LAngleBang {
-                    return Err(Error::ParsingError {
+                    return Err(Error::Parsing {
                         message: format!(
                             "Failed to find closing {:?} for this {:?}",
                             Lexeme::RAngle,
@@ -190,7 +200,7 @@ impl Document {
                 }
                 tag_contents.push_str(lexer.slice());
             } else {
-                return Err(Error::ParsingError {
+                return Err(Error::Parsing {
                     message: format!(
                         "Failed to find closing {:?} for this {:?}",
                         Lexeme::RAngle,
@@ -207,7 +217,7 @@ impl Document {
         let mut alt = split.remainder().map(|x| x.to_string());
         if src.is_none() {
             let whole_region = region.start..lexer.span().end;
-            return Err(Error::ParsingError {
+            return Err(Error::Parsing {
                 message: "No image source was found for this image element.".to_string(),
                 region: whole_region,
                 source: lexer.source().to_string(),
@@ -234,7 +244,7 @@ impl Document {
             } else if token.is_some() {
                 text.push_str(lexer.slice());
             } else {
-                return Err(Error::ParsingError {
+                return Err(Error::Parsing {
                     message: format!(
                         "Failed to find closing {:?} for this {:?}",
                         Lexeme::RNAngleBrace,

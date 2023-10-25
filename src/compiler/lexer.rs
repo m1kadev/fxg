@@ -3,6 +3,10 @@ use std::ops::Range;
 
 use logos::Logos;
 
+use crate::error::Error;
+
+use super::header::DocumentHeader;
+
 #[derive(Logos, Debug, PartialEq, Eq)]
 #[logos(skip r"[\r\t\n\f]+")]
 pub enum Lexeme {
@@ -58,18 +62,38 @@ pub struct Lexer<'src> {
     lexer: logos::Lexer<'src, Lexeme>,
     slice_override: Option<Range<usize>>,
     peekable: Peekable<logos::Lexer<'src, Lexeme>>,
+
+    pub header: Option<DocumentHeader>,
 }
 
 // public functions
 impl<'src> Lexer<'src> {
-    pub fn lex(source: &'src str) -> Self {
+    pub fn lex(source: &'src str) -> Result<Self, Error> {
+        let mut header = None;
+        // ! this code should technically be in document, but logos doesnt allow anchors
+        if source.starts_with("---") {
+            if source.matches("---").count() < 2 {
+                return Err(Error::Parsing {
+                    message: "Failed to find closing --- for this ---".to_string(),
+                    region: 0..3,
+                    source: source.to_string(),
+                });
+            }
+            let mut split = source.split("---");
+            split.next();
+            let yaml = split.next().unwrap();
+            let header_r = serde_yaml::from_str::<DocumentHeader>(yaml)?;
+            header = Some(header_r);
+        }
+
         let lexer = Lexeme::lexer(source);
         let peekable = Lexeme::lexer(source).peekable();
-        Self {
+        Ok(Self {
             lexer,
             peekable,
             slice_override: None,
-        }
+            header,
+        })
     }
 
     pub fn slice(&self) -> &str {
