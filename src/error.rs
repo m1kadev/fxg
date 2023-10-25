@@ -60,9 +60,9 @@ impl Error {
             source,
         } = self
         {
-            dbg!(region);
             let (row_begin, col_begin) = row_and_col_from_index(source, region.start);
             let (row_end, col_end) = row_and_col_from_index(source, region.end);
+            let lines = source.lines().collect::<Vec<_>>();
 
             eprintln!(
                 "| [{}:{}] {} {}",
@@ -72,36 +72,20 @@ impl Error {
                 message
             );
             eprintln!("| ");
-            let mut lines = source.lines();
-            let mut current_row = 0;
-            let mut current_index = 0;
-            loop {
-                if current_row == row_begin {
-                    break;
-                }
-                let line = lines.next().unwrap();
-                current_index += line.len();
-                current_row += 1;
-            }
-            eprint!("| {:1$} ", current_row + 1, row_end.to_string().len());
-            for line in lines {
-                current_index += line.len();
-                eprintln!("{}", line);
-                eprint!("| {:1$} ", "", row_end.to_string().len());
-                for _ in 0..line.len() {
-                    current_index += 1;
-                    if region.contains(&current_index) {
-                        eprint!("{}", "~".red());
-                    } else {
-                        eprint!(" ");
-                    }
-                }
-                eprintln!();
-                current_row += 1;
-                if current_row > row_end {
-                    break;
-                }
-            }
+            let line = lines[row_begin];
+            eprintln!(
+                "| {} {}{}{}",
+                row_begin + 1,
+                &line[..col_begin],
+                &line[col_begin..col_end].red(),
+                &line[col_end..]
+            );
+            eprintln!(
+                "| {} {}{}",
+                " ".repeat(line[..col_begin].len() + (row_begin + 1).to_string().len()),
+                "~".repeat(line[col_begin..col_end].len()).red(),
+                " ".repeat(line[col_end..].len())
+            );
         } else {
             unreachable!();
         }

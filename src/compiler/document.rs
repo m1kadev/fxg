@@ -151,7 +151,8 @@ impl Document {
             });
         }
         if remainder.is_none() {
-            let whole_region = region;
+            let whole_region = region.start..lexer.span().end;
+
             return Err(Error::ParsingError {
                 message: "No link text was found for this link element.".to_string(),
                 region: whole_region,
