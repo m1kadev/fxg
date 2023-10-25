@@ -7,9 +7,10 @@
 
 //italic// !!bold!!
 
-<!/static/dog.png dog>
+<!/static/dog.png>
 
-Visit my website <https://tagsdev.nl/ her>!
+Visit my website <https://tagsdev.nl/
+>!
 
 [[ No formatting here! ]]
 

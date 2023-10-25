@@ -61,8 +61,12 @@ impl Error {
         } = self
         {
             let (row_begin, col_begin) = row_and_col_from_index(source, region.start);
-            let (row_end, col_end) = row_and_col_from_index(source, region.end);
+            let (row_end, mut col_end) = row_and_col_from_index(source, region.end);
             let lines = source.lines().collect::<Vec<_>>();
+            if row_begin != row_end {
+                // collapse the error into 1 line
+                col_end = lines[row_begin].len();
+            }
 
             eprintln!(
                 "| [{}:{}] {} {}",
