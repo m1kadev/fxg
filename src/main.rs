@@ -4,7 +4,7 @@
 #![feature(iter_advance_by)]
 #![feature(step_trait)]
 
-use std::{env::current_dir, process::exit};
+use std::{env::current_dir, path::PathBuf, process::exit};
 
 use clap::{Parser, Subcommand};
 
@@ -15,6 +15,8 @@ mod project;
 use compiler::build;
 use error::Error;
 
+use crate::project::Project;
+
 #[derive(Parser)]
 pub struct Fxg {
     #[command(subcommand)]
@@ -24,13 +26,7 @@ pub struct Fxg {
 #[derive(Subcommand)]
 pub enum Subcommands {
     Build {
-        file: String,
-
-        #[arg(short, long)]
-        template: String,
-
-        #[arg(short, long)]
-        output: String,
+        folder: Option<PathBuf>,
     },
 
     #[cfg(debug_assertions)]
@@ -47,12 +43,8 @@ pub enum Subcommands {
 
 fn do_cli(args: Subcommands) -> Result<(), Error> {
     use Subcommands::*;
-    match &args {
-        Build {
-            file,
-            template,
-            output,
-        } => build(file, template, output),
+    match args {
+        Build { folder } => build(Project::from_dir(folder.unwrap_or(current_dir()?))?),
 
         New { folder } => {
             let mut path = current_dir()?;
@@ -61,7 +53,7 @@ fn do_cli(args: Subcommands) -> Result<(), Error> {
         }
 
         #[cfg(debug_assertions)]
-        VomitDebug { file, output } => compiler::vomit_debug(file, output),
+        VomitDebug { file, output } => compiler::vomit_debug(&file, &output),
     }
 }
 

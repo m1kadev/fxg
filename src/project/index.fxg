@@ -1,9 +1,11 @@
 ---
----
 title: "Index"
 ogp:
   type: website
   description: "New website"
+tags:
+  - tag1
+  - tag2
 ---
 
 

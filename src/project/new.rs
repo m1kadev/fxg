@@ -6,59 +6,36 @@ use std::{
 
 use crate::error::Error;
 
-use super::Project;
+use super::ProjectMeta;
 
 #[allow(dead_code)] // ????????
-pub const TEMPLATE: &str = r#"---
----
-title: "Index"
-ogp:
-  type: website
-  description: "New website"
----
-
-
-= Heading 1 =
-== Heading 2 ==
-=== Heading 3 ===
-==== Heading 4 ====
-===== Heading 5 =====
-====== Heading 6 ======
-
-//italic// !!bold!! __underline__
-
-this is an image:
-<!/static/dog.png>
-
-this is an image with alt text:
-<!/static/dog.png Dog>
-
-This is a <https://github.com/zTags/fxg link>!
-
-[[ No formatting here! ]]
-
-This text will be on
-
-different lines.
-
-This text will be on
-the same line.
-"#;
-
-pub const DOG_IMAGE: &[u8] = include_bytes!("../../dog.png");
+pub const TEMPLATE_FXG: &str = include_str!("index.fxg");
+pub const TEMPLATE_HTML: &str = include_str!("template.html");
+pub const DOG_IMAGE: &[u8] = include_bytes!("dog.png");
 
 pub fn new(root_folder: PathBuf) -> Result<(), Error> {
     let mut path = root_folder.clone();
     fs::create_dir(root_folder)?;
-    path.push("config.yml");
 
+    // write config.yml
+    path.push("config.yml");
     let mut config = File::create(&path)?;
-    config.write_all(serde_yaml::to_string(&Project::default())?.as_bytes())?;
+    config.write_all(serde_yaml::to_string(&ProjectMeta::default())?.as_bytes())?;
+    path.pop();
     drop(config);
 
+    // write template.html
+    path.push("template.html");
+    let mut dog_image = File::create(&path)?;
+    dog_image.write_all(TEMPLATE_HTML.as_bytes())?;
     path.pop();
+    drop(dog_image);
+
+    // create static/
     path.push("static");
     fs::create_dir(&path)?;
+
+    // write static/dog.png
     path.push("dog.png");
     let mut dog_image = File::create(&path)?;
     dog_image.write_all(DOG_IMAGE)?;
@@ -66,12 +43,20 @@ pub fn new(root_folder: PathBuf) -> Result<(), Error> {
     path.pop();
     path.pop();
 
+    // create src/
     path.push("src");
     fs::create_dir(&path)?;
+
+    // write src/index.png
     path.push("index.fxg");
     let mut index = File::create(&path)?;
-    index.write_all(TEMPLATE.as_bytes())?;
+    index.write_all(TEMPLATE_FXG.as_bytes())?;
     drop(index);
+    path.pop();
+    path.pop();
 
+    // create out/
+    path.push("out");
+    fs::create_dir(&path)?;
     Ok(())
 }

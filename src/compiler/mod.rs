@@ -1,7 +1,8 @@
-use crate::Error;
+use crate::{project::Project, Error};
 use std::{
     fs::{self, File},
     io::Write,
+    path::PathBuf,
 };
 
 mod document;
@@ -12,24 +13,36 @@ mod nodes;
 pub use document::Document;
 pub use lexer::Lexer;
 
-pub fn build(file: &str, template: &str, output: &str) -> Result<(), Error> {
+pub fn build(project: Project) -> Result<(), Error> {
+    let files = project.collect_documents()?;
+    let src = project.src_dir();
+    let dest = project.dest_dir();
+    let template = project.read_template()?;
+
+    for source in files {
+        let relative = source.strip_prefix(&src)?;
+        let destination = dest.join(relative);
+        build_file(source, &template, destination)?;
+    }
+    Ok(())
+}
+
+fn build_file(file: PathBuf, template: &str, output: PathBuf) -> Result<(), Error> {
     let data = fs::read_to_string(file)?;
     let lexer = Lexer::lex(&data)?;
     let document = Document::build(lexer)?;
 
-    let final_output = fs::read_to_string(template)?;
-
-    if !final_output.contains("{{FXG_HEADER}}") {
+    if !template.contains("{{FXG_HEADER}}") {
         return Err(Error::Header("No header field found!".to_string()));
     }
 
-    if !final_output.contains("{{FXG_OUTPUT}}") {
+    if !template.contains("{{FXG_OUTPUT}}") {
         return Err(Error::Header("No output field found!".to_string()));
     }
 
     let mut output_file = File::create(output)?;
     output_file.write_all(
-        final_output
+        template
             .replace("{{FXG_OUTPUT}}", &document.as_html())
             .replace("{{FXG_HEADER}}", &document.header_html())
             .as_bytes(),

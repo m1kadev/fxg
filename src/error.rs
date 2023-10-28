@@ -2,15 +2,33 @@ use std::{
     fmt::{Debug, Display},
     io,
     ops::Range,
+    path::StripPrefixError,
 };
 
 use colored::Colorize;
+
+macro_rules! map_error {
+    ($error:ty => $enum_variant:ident) => {
+        impl From<$error> for Error {
+            fn from(value: $error) -> Self {
+                Self::$enum_variant(value)
+            }
+        }
+    };
+
+    ($($error:ty => $enum_variant:ident,)+) => {
+        $(
+            map_error!($error => $enum_variant);
+        )+
+    };
+}
 
 #[derive(Debug)]
 pub enum Error {
     Io(io::Error),
     Yaml(serde_yaml::Error),
     Header(String),
+    StripPrefix(StripPrefixError),
     Parsing {
         message: String,
         region: Range<usize>,
@@ -18,22 +36,16 @@ pub enum Error {
     },
 }
 
-impl From<io::Error> for Error {
-    fn from(value: io::Error) -> Self {
-        Self::Io(value)
-    }
-}
-
-impl From<serde_yaml::Error> for Error {
-    fn from(value: serde_yaml::Error) -> Self {
-        Self::Yaml(value)
-    }
+map_error! {
+    io::Error => Io,
+    serde_yaml::Error => Yaml,
+    StripPrefixError => StripPrefix,
 }
 
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Io(..) | Self::Yaml(..) => write!(f, "{:?}", self),
+            Self::Io(..) | Self::Yaml(..) | Self::StripPrefix(..) => write!(f, "{:?}", self),
             Self::Parsing { .. } => self.display_parsing_error(),
             Self::Header(..) => self.display_header_error(),
         }
