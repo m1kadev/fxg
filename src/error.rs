@@ -27,8 +27,10 @@ macro_rules! map_error {
 pub enum Error {
     Io(io::Error),
     Yaml(serde_yaml::Error),
+    Json(serde_json::Error),
     Header(String),
     StripPrefix(StripPrefixError),
+    PathDisplayError,
     Parsing {
         message: String,
         region: Range<usize>,
@@ -39,13 +41,16 @@ pub enum Error {
 map_error! {
     io::Error => Io,
     serde_yaml::Error => Yaml,
+    serde_json::Error => Json,
     StripPrefixError => StripPrefix,
 }
 
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Io(..) | Self::Yaml(..) | Self::StripPrefix(..) => write!(f, "{:?}", self),
+            Self::Io(..) | Self::Yaml(..) | Self::StripPrefix(..) | Self::Json(..) | Self::PathDisplayError => {
+                write!(f, "{:?}", self)
+            }
             Self::Parsing { .. } => self.display_parsing_error(),
             Self::Header(..) => self.display_header_error(),
         }

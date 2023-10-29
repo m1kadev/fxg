@@ -4,15 +4,16 @@ use serde::{Deserialize, Serialize};
 pub struct DocumentHeader {
     pub ogp: OgpData,
     pub title: String,
+    pub tags: Vec<String>,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct OgpData {
     #[serde(rename = "type")]
-    typ: String,
-    description: String,
+    pub typ: String,
+    pub description: String,
 
-    image: Option<Image>,
+    pub image: Option<Image>,
 }
 
 #[derive(Deserialize, Serialize)]

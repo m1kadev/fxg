@@ -82,6 +82,16 @@ impl Project {
         path
     }
 
+    pub fn static_dir(&self) -> PathBuf {
+        let mut path = self.base_path.clone();
+        path.push(&self.metadata.static_folder);
+        path
+    }
+
+    pub fn base_dir(&self) -> PathBuf {
+        self.base_path.clone()
+    }
+
     pub fn read_template(&self) -> Result<String, io::Error> {
         let mut path = self.base_path.clone();
         path.push(&self.metadata.template);

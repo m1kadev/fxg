@@ -9,10 +9,16 @@ use crate::error::Error;
 use super::ProjectMeta;
 
 #[allow(dead_code)] // ????????
+#[cfg(feature = "developer")]
 pub const TEMPLATE_FXG: &str = include_str!("index.fxg");
+
+#[cfg(feature = "developer")]
 pub const TEMPLATE_HTML: &str = include_str!("template.html");
+
+#[cfg(feature = "developer")]
 pub const DOG_IMAGE: &[u8] = include_bytes!("dog.png");
 
+#[cfg(feature = "developer")]
 pub fn new(root_folder: PathBuf) -> Result<(), Error> {
     let mut path = root_folder.clone();
     fs::create_dir(root_folder)?;

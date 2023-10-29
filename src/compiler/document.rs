@@ -56,6 +56,10 @@ impl Document {
         output
     }
 
+    pub fn header(self) -> DocumentHeader {
+        self.1.unwrap()
+    }
+
     pub fn build(mut lexer: Lexer) -> Result<Self, Error> {
         let mut nodes = vec![];
         loop {

@@ -2,10 +2,9 @@
 
 ## todo :)
 
-- replace building a single file with building the whole project
-- think about how we could make an index page w/ filter by tag, search article, list, latest, etc. (js api?)
-- add nice logging messages
 - add web server
+- write the wiki
+- make sure there's no dead code when using (or not using) features
 
 ## Usage
 
