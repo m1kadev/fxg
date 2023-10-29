@@ -5,13 +5,22 @@
 - write the wiki
 - when a .html file is found in the /src folder, copy it verbatim
 - make sure there's no dead code when using (or not using) features (for release)
+- logo? idk
+- syntax highlighting plugin for vscode
+- publish to cargo
 
-## Usage
+## Your first FXG blog
 
-### CLI
+You will need
 
-i cba to write this rn
+- Cargo
+- A text editor ([VSCode](https://code.visualstudio.com/) is recommended, but you can use anything)
+- 2 tbsp salt
 
-### Syntax
+Steps:
 
-see fxg/Usage/CLI
+1. Open a terminal
+2. In this terminal, run the command `cargo install fxg`
+3. When this finishes, run `fxg new my_first_fxg_blog`
+4. Open VSCode in the newly created folder.
+5. All features are used in this one file, you can view this as a [cheatsheet](https://gist.github.com/zTags/ba3f4ef67a1593f1b71fa33edcebaa2e)
