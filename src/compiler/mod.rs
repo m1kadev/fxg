@@ -44,7 +44,7 @@ fn copy_dir(src: PathBuf, dst: PathBuf) -> io::Result<()> {
     Ok(())
 }
 
-pub fn build(project: Project) -> Result<(), Error> {
+pub fn build(project: Project) -> Result<Project, Error> {
     let files = project.collect_documents()?;
     let src = project.src_dir();
     let dest = project.dest_dir();
@@ -54,7 +54,8 @@ pub fn build(project: Project) -> Result<(), Error> {
 
     for source in files {
         let relative = source.strip_prefix(&src)?;
-        let destination = dest.join(relative);
+        let mut destination = dest.join(relative);
+        destination.set_extension("html");
         let document = build_file(source, &template, destination)?;
         let header = document.header();
         for tag in &header.tags {
@@ -81,7 +82,7 @@ pub fn build(project: Project) -> Result<(), Error> {
     let destination = dest.join(relative);
     copy_dir(static_folder, destination)?;
 
-    Ok(())
+    Ok(project)
 }
 
 fn build_file(file: PathBuf, template: &str, output: PathBuf) -> Result<Document, Error> {

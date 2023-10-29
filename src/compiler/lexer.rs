@@ -68,7 +68,7 @@ pub struct Lexer<'src> {
 
 // public functions
 impl<'src> Lexer<'src> {
-    pub fn lex(source: &'src str) -> Result<Self, Error> {
+    pub fn lex(mut source: &'src str) -> Result<Self, Error> {
         let mut header = None;
         // ! this code should technically be in document, but logos doesnt allow anchors
         if source.starts_with("---") {
@@ -84,6 +84,7 @@ impl<'src> Lexer<'src> {
             let yaml = split.next().unwrap();
             let header_r = serde_yaml::from_str::<DocumentHeader>(yaml)?;
             header = Some(header_r);
+            source = split.remainder().unwrap().trim();
         }
 
         let lexer = Lexeme::lexer(source);

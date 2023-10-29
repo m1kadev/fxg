@@ -28,9 +28,11 @@ pub enum Error {
     Io(io::Error),
     Yaml(serde_yaml::Error),
     Json(serde_json::Error),
+    Hyper(hyper::Error),
     Header(String),
     StripPrefix(StripPrefixError),
     PathDisplayError,
+    AddrParse(std::net::AddrParseError),
     Parsing {
         message: String,
         region: Range<usize>,
@@ -43,12 +45,20 @@ map_error! {
     serde_yaml::Error => Yaml,
     serde_json::Error => Json,
     StripPrefixError => StripPrefix,
+    hyper::Error => Hyper,
+    std::net::AddrParseError => AddrParse,
 }
 
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Io(..) | Self::Yaml(..) | Self::StripPrefix(..) | Self::Json(..) | Self::PathDisplayError => {
+            Self::Io(..)
+            | Self::Yaml(..)
+            | Self::StripPrefix(..)
+            | Self::Json(..)
+            | Self::PathDisplayError
+            | Self::Hyper(..)
+            | Self::AddrParse(..) => {
                 write!(f, "{:?}", self)
             }
             Self::Parsing { .. } => self.display_parsing_error(),

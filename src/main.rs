@@ -11,6 +11,7 @@ use clap::{Parser, Subcommand};
 mod compiler;
 mod error;
 mod project;
+mod server;
 
 use colored::Colorize;
 use compiler::build;
@@ -28,12 +29,13 @@ pub struct Fxg {
 pub enum Subcommands {
     Build {
         folder: Option<PathBuf>,
+        #[cfg(feature = "developer")]
+        #[arg(short, long)]
+        start: bool,
     },
 
     #[cfg(feature = "developer")]
-    New {
-        folder: String,
-    },
+    New { folder: String },
 
     #[cfg(feature = "contributor")]
     VomitDebug {
@@ -46,7 +48,11 @@ pub enum Subcommands {
 fn do_cli(args: Subcommands) -> Result<(), Error> {
     use Subcommands::*;
     match args {
-        Build { folder } => {
+        Build {
+            folder,
+            #[cfg(feature = "developer")]
+            start,
+        } => {
             let path = folder.unwrap_or(current_dir()?);
             println!(
                 "{} project {} ({})",
@@ -60,10 +66,14 @@ fn do_cli(args: Subcommands) -> Result<(), Error> {
                 &path.as_os_str().to_str().ok_or(Error::PathDisplayError)?
             );
             let begin = Instant::now();
-            build(Project::from_dir(path)?)?;
+            let projct = build(Project::from_dir(path.clone())?)?;
             let end = Instant::now();
             let diff = end - begin;
             println!("{} in {}s", "Done".bold().green(), diff.as_secs());
+            #[cfg(feature = "developer")]
+            if start {
+                server::start_server(projct.dest_dir())?;
+            }
             Ok(())
         }
 
