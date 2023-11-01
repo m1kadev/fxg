@@ -1,0 +1,51 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "FXG",
+	"patterns": [
+		{
+			"include": "#simple"
+		},
+		{
+			"name": "meta.embedded.block.yaml",
+			"begin": "---",
+			"end": "---",
+			"patterns": [
+				{
+					"name": "string",
+					"match": "some string pattern"
+				}
+			]
+		}
+	],
+	"repository": {
+		"simple": {
+			"patterns": [
+				{
+					"name": "markup.italic.fxg",
+					"match": "\\/\\/(.+)\\/\\/"
+				},
+				{
+					"name": "markup.bold.fxg",
+					"match": "!!(.+)!!"
+				},
+				{
+					"name": "markup.bold.fxg",
+					"match": "__(.+)__"
+				},
+				{
+					"name": "entity.name.section.fxg",
+					"match": "(?<!=+)={1,6}([^=]+)={1,6}"
+				},
+				{
+					"name": "constant",
+					"match": "\\[+(.+)\\]+"
+				},
+				{
+					"name": "markup.underline.link",
+					"match": "<!?(.+)>"
+				}
+			]
+		}
+	},
+	"scopeName": "source.fxg"
+}

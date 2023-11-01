@@ -1,0 +1,37 @@
+{
+  "name": "fxg-language-support",
+  "displayName": "FXG Language Support",
+  "description": "Adds syntax highlighting for FXG files.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.83.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "fxg",
+        "aliases": [
+          "FXG",
+          "fxg"
+        ],
+        "extensions": [
+          "fxg"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "fxg",
+        "scopeName": "source.fxg",
+        "path": "./syntaxes/fxg.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml"
+        }
+      }
+    ]
+  }
+}
