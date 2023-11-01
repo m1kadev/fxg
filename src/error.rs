@@ -27,7 +27,6 @@ macro_rules! map_error {
 
     ($($(#[$attr_type:ident])? $error:ty => $enum_variant:ident,)+) => {
         $(
-
             map_error!($(#[$attr_type])? $error => $enum_variant);
         )+
     };
@@ -43,6 +42,7 @@ pub enum Error {
     Header(String),
     StripPrefix(StripPrefixError),
     PathDisplayError,
+    #[cfg(feature = "developer")]
     AddrParse(std::net::AddrParseError),
     Parsing {
         message: String,
@@ -57,9 +57,10 @@ map_error! {
     serde_json::Error => Json,
     StripPrefixError => StripPrefix,
     #[developer] hyper::Error => Hyper,
-    std::net::AddrParseError => AddrParse,
+    #[developer] std::net::AddrParseError => AddrParse,
 }
 
+#[cfg(feature = "developer")]
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -70,6 +71,23 @@ impl Display for Error {
             | Self::PathDisplayError
             | Self::Hyper(..)
             | Self::AddrParse(..) => {
+                write!(f, "{:?}", self)
+            }
+            Self::Parsing { .. } => self.display_parsing_error(),
+            Self::Header(..) => self.display_header_error(),
+        }
+    }
+}
+
+#[cfg(not(feature = "developer"))]
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Io(..)
+            | Self::Yaml(..)
+            | Self::Json(..)
+            | Self::PathDisplayError
+            | Self::StripPrefix(..) => {
                 write!(f, "{:?}", self)
             }
             Self::Parsing { .. } => self.display_parsing_error(),
