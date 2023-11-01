@@ -47,25 +47,33 @@ impl Project {
         })
     }
 
-    fn collect_documents_rec(
+    fn collect_files(
         folder: PathBuf,
         collector: &mut Vec<PathBuf>,
+        extension: &'static str,
     ) -> Result<(), crate::Error> {
         let read = folder.read_dir()?;
         for entry_r in read {
             let entry = entry_r?;
             if entry.metadata()?.is_file() {
+                if let Some(v) = entry.path().extension().map(|x| x.to_string_lossy()) {
+                    if v != extension {
+                        continue; // the file doesn't match the extension
+                    }
+                } else {
+                    continue; // the file didn't have an extension
+                }
                 collector.push(entry.path());
             } else {
-                Self::collect_documents_rec(entry.path(), collector)?;
+                Self::collect_files(entry.path(), collector, extension)?;
             }
         }
         Ok(())
     }
 
-    pub fn collect_documents(&self) -> Result<Vec<PathBuf>, Error> {
+    pub fn collect_documents(&self, extension: &'static str) -> Result<Vec<PathBuf>, Error> {
         let mut files = vec![];
-        Self::collect_documents_rec(self.src_dir(), &mut files)?;
+        Self::collect_files(self.src_dir(), &mut files, extension)?;
 
         Ok(files)
     }

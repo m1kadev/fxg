@@ -45,14 +45,15 @@ fn copy_dir(src: PathBuf, dst: PathBuf) -> io::Result<()> {
 }
 
 pub fn build(project: Project) -> Result<Project, Error> {
-    let files = project.collect_documents()?;
+    let fxg_files = project.collect_documents("fxg")?;
+    let html_files = project.collect_documents("html")?;
     let src = project.src_dir();
     let dest = project.dest_dir();
     let template = project.read_template()?;
     let mut known_tags = HashSet::new();
     let mut pages = vec![];
 
-    for source in files {
+    for source in fxg_files {
         let relative = source.strip_prefix(&src)?;
         let mut destination = dest.join(relative);
         destination.set_extension("html");
@@ -66,6 +67,12 @@ pub fn build(project: Project) -> Result<Project, Error> {
             tags: header.tags,
             image: header.ogp.image,
         });
+    }
+
+    for source in html_files {
+        let relative = source.strip_prefix(&src)?;
+        let destination = dest.join(relative);
+        fs::copy(source, destination)?;
     }
 
     let mut data_path = project.dest_dir();

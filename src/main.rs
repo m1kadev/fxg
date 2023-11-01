@@ -11,6 +11,7 @@ use clap::{Parser, Subcommand};
 mod compiler;
 mod error;
 mod project;
+#[cfg(feature = "developer")]
 mod server;
 
 use colored::Colorize;

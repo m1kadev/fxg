@@ -16,9 +16,19 @@ macro_rules! map_error {
         }
     };
 
-    ($($error:ty => $enum_variant:ident,)+) => {
+    (#[developer] $error:ty => $enum_variant:ident) => {
+        #[cfg(feature = "developer")]
+        impl From<$error> for Error {
+            fn from(value: $error) -> Self {
+                Self::$enum_variant(value)
+            }
+        }
+    };
+
+    ($($(#[$attr_type:ident])? $error:ty => $enum_variant:ident,)+) => {
         $(
-            map_error!($error => $enum_variant);
+
+            map_error!($(#[$attr_type])? $error => $enum_variant);
         )+
     };
 }
@@ -28,6 +38,7 @@ pub enum Error {
     Io(io::Error),
     Yaml(serde_yaml::Error),
     Json(serde_json::Error),
+    #[cfg(feature = "developer")]
     Hyper(hyper::Error),
     Header(String),
     StripPrefix(StripPrefixError),
@@ -45,7 +56,7 @@ map_error! {
     serde_yaml::Error => Yaml,
     serde_json::Error => Json,
     StripPrefixError => StripPrefix,
-    hyper::Error => Hyper,
+    #[developer] hyper::Error => Hyper,
     std::net::AddrParseError => AddrParse,
 }
 
