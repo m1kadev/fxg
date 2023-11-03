@@ -8,7 +8,6 @@ use crate::error::Error;
 
 use super::ProjectMeta;
 
-#[allow(dead_code)] // ????????
 #[cfg(feature = "developer")]
 pub const TEMPLATE_FXG: &str = include_str!("index.fxg");
 

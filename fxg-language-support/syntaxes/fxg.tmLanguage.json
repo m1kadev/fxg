@@ -6,18 +6,36 @@
 			"include": "#simple"
 		},
 		{
-			"name": "meta.embedded.block.yaml",
-			"begin": "---",
-			"end": "---",
-			"patterns": [
-				{
-					"name": "string",
-					"match": "some string pattern"
-				}
-			]
+			"include": "#header"
+		},
+		{
+			"include": "#image"
+		},
+		{
+			"include": "#link"
 		}
 	],
 	"repository": {
+		"header": {
+			"name": "meta.embedded.block.yaml",
+			"begin": "---",
+			"end": "---",
+			"beginCaptures": {
+				"0": {
+					"name": "comment"
+				}
+			},
+			"endCaptures": {
+				"0": {
+					"name": "comment"
+				}
+			},
+			"patterns": [
+				{
+					"include": "source.yaml"
+				}
+			]
+		},
 		"simple": {
 			"patterns": [
 				{
@@ -39,10 +57,48 @@
 				{
 					"name": "constant",
 					"match": "\\[+(.+)\\]+"
-				},
+				}
+			]
+		},
+		"image": {
+			"name": "comment",
+			"begin": "<!",
+			"end": ">",
+			"beginCaptures": {
+				"0": {
+					"name": "markup.quote"
+				}
+			},
+			"endCaptures": {
+				"0": {
+					"name": "markup.quote"
+				}
+			},
+			"patterns": [
 				{
 					"name": "markup.underline.link",
-					"match": "<!?(.+)>"
+					"match": " ([^>]+)"
+				}
+			]
+		},
+		"link": {
+			"name": "comment",
+			"begin": "<",
+			"end": ">",
+			"beginCaptures": {
+				"0": {
+					"name": "markup.quote"
+				}
+			},
+			"endCaptures": {
+				"0": {
+					"name": "markup.quote"
+				}
+			},
+			"patterns": [
+				{
+					"name": "markup.underline.link",
+					"match": " ([^>]+)"
 				}
 			]
 		}

@@ -3,10 +3,8 @@
 ## todo :)
 
 - write the wiki
-- syntax highlighting plugin for vscode
 - publish to cargo
 - add progress indicator
-- fix the yaml embedding not working properly (VSCode)
 
 ## Your first FXG blog
 
