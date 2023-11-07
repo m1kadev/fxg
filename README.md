@@ -5,6 +5,7 @@
 - write the wiki
 - publish to cargo
 - add progress indicator
+- publish vscode extension
 
 ## Your first FXG blog
 
