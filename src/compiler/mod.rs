@@ -1,10 +1,12 @@
 use crate::{project::Project, Error};
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
     fs::{self, File},
     io::{self, Write},
     path::PathBuf,
+    time::{Duration, Instant},
 };
 
 mod document;
@@ -30,6 +32,7 @@ pub struct SiteData {
     known_tags: Vec<String>,
 }
 
+#[inline]
 fn copy_dir(src: PathBuf, dst: PathBuf) -> io::Result<()> {
     fs::create_dir_all(&dst)?;
     for entry in fs::read_dir(src)? {
@@ -44,6 +47,27 @@ fn copy_dir(src: PathBuf, dst: PathBuf) -> io::Result<()> {
     Ok(())
 }
 
+#[inline]
+fn draw_progress_bar(progress: f32, label: &str) -> String {
+    let building_label = "Building ".blue().bold();
+    let mut progress_str = String::from("[");
+    let equalses = ((progress * 10f32).round() - 1f32) as usize;
+    progress_str.push_str("=".repeat(equalses).as_str());
+    progress_str.push('>');
+    let filler = 10 - equalses;
+    progress_str.push_str(" ".repeat(filler).as_str());
+    progress_str.push(']');
+    format!("{}{} ({})", building_label, progress_str, label)
+}
+
+#[inline]
+fn display_date(date: &Duration) -> String {
+    let seconds = date.as_secs();
+    let minutes = seconds / 60;
+    let seconds = seconds % 60;
+    format!("{minutes}m{seconds}s")
+}
+
 pub fn build(project: Project) -> Result<Project, Error> {
     let fxg_files = project.collect_documents("fxg")?;
     let html_files = project.collect_documents("html")?;
@@ -52,8 +76,17 @@ pub fn build(project: Project) -> Result<Project, Error> {
     let template = project.read_template()?;
     let mut known_tags = HashSet::new();
     let mut pages = vec![];
+    let begin = Instant::now();
+
+    let mut progress = 0f32;
+    let out_of = (fxg_files.len() + html_files.len()) as f32;
+    println!();
 
     for source in fxg_files {
+        progress += 1f32;
+        let path = source.as_os_str().to_string_lossy();
+        let label = &path[path.len() - 21..];
+        print!("\r{}", draw_progress_bar(progress / out_of, label));
         let relative = source.strip_prefix(&src)?;
         let mut destination = dest.join(relative);
         destination.set_extension("html");
@@ -70,10 +103,16 @@ pub fn build(project: Project) -> Result<Project, Error> {
     }
 
     for source in html_files {
+        progress += 1f32;
+        let path = source.as_os_str().to_string_lossy();
+        let label = &path[path.len() - 21..];
+        print!("\r{}", draw_progress_bar(progress / out_of, label));
         let relative = source.strip_prefix(&src)?;
         let destination = dest.join(relative);
         fs::copy(source, destination)?;
     }
+    println!();
+    println!("{} metadata", "Bundling".blue().bold());
 
     let mut data_path = project.dest_dir();
     data_path.push("fxg.json");
@@ -88,6 +127,10 @@ pub fn build(project: Project) -> Result<Project, Error> {
     let relative = static_folder.strip_prefix(&project.base_dir())?;
     let destination = dest.join(relative);
     copy_dir(static_folder, destination)?;
+    let end = Instant::now();
+    let delta_t = end - begin;
+
+    println!("{} in {}", "Compiled".green().bold(), display_date(&delta_t));
 
     Ok(project)
 }
