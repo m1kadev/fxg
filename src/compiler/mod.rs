@@ -115,9 +115,9 @@ pub fn build(project: Project) -> Result<Project, Error> {
         let destination = dest.join(relative);
         fs::copy(source, destination)?;
     }
+    print!("\r{}", " ".repeat(50));
+    print!("\r{} metadata", "Bundling".blue().bold());
     println!();
-    println!("{} metadata", "Bundling".blue().bold());
-
     let mut data_path = project.dest_dir();
     data_path.push("fxg.json");
     let file = File::create(data_path)?;
