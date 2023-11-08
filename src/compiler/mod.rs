@@ -84,10 +84,12 @@ pub fn build(project: Project) -> Result<Project, Error> {
 
     for source in fxg_files {
         progress += 1f32;
-        let path = source.as_os_str().to_string_lossy();
-        let label = &path[path.len() - 21..];
-        print!("\r{}", draw_progress_bar(progress / out_of, label));
         let relative = source.strip_prefix(&src)?;
+        let path = relative.as_os_str().to_string_lossy();
+        let label = &path[if path.len() <= 20 { 0 } else { path.len() - 20 }..];
+        print!("\r{}", " ".repeat(100));
+        print!("\r{}", draw_progress_bar(progress / out_of, label));
+        io::stdout().flush()?;
         let mut destination = dest.join(relative);
         destination.set_extension("html");
         let document = build_file(source, &template, destination)?;
@@ -104,10 +106,12 @@ pub fn build(project: Project) -> Result<Project, Error> {
 
     for source in html_files {
         progress += 1f32;
-        let path = source.as_os_str().to_string_lossy();
-        let label = &path[path.len() - 21..];
-        print!("\r{}", draw_progress_bar(progress / out_of, label));
         let relative = source.strip_prefix(&src)?;
+        let path = relative.as_os_str().to_string_lossy();
+        let label = &path[if path.len() <= 20 { 0 } else { path.len() - 20 }..];
+        print!("\r{}", " ".repeat(50));
+        print!("\r{}", draw_progress_bar(progress / out_of, label));
+        io::stdout().flush()?;
         let destination = dest.join(relative);
         fs::copy(source, destination)?;
     }
@@ -130,7 +134,11 @@ pub fn build(project: Project) -> Result<Project, Error> {
     let end = Instant::now();
     let delta_t = end - begin;
 
-    println!("{} in {}", "Compiled".green().bold(), display_date(&delta_t));
+    println!(
+        "{} in {}",
+        "Compiled".green().bold(),
+        display_date(&delta_t)
+    );
 
     Ok(project)
 }
