@@ -2,6 +2,12 @@
 name = "fxg"
 version = "0.1.0"
 edition = "2021"
+description = "An alternative markdown language"
+license = "MIT"
+license-file = "LICENSE"
+documentation = "https://github.com/zTags/fxg/wiki"
+homepage = "https://github.com/zTags/fxg"
+repository = "https://github.com/zTags/fxg"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
