@@ -2,7 +2,9 @@
   "name": "fxg-language-support",
   "displayName": "FXG Language Support",
   "description": "Adds syntax highlighting for FXG files.",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "repository": "https://github.com/zTags/fxg",
+  "publisher": "tags",
   "engines": {
     "vscode": "^1.83.0"
   },

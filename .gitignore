@@ -1,3 +1,4 @@
 /target
 /test_project
 /vscode-plugin/node_modules
+*.vsix
