@@ -16,7 +16,9 @@ use colored::Colorize;
 use compiler::build;
 use error::Error;
 
-use crate::{compiler::DocumentHeader, project::Project, project::TEMPLATE_FXG};
+use crate::{compiler::DocumentHeader, project::Project};
+#[cfg(feature = "developer")]
+use crate::project::TEMPLATE_FXG;
 
 #[derive(Parser)]
 pub struct Fxg {

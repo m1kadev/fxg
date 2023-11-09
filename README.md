@@ -1,11 +1,5 @@
 # fxg
 
-## todo :)
-
-- publish to cargo
-- publish vscode extension
-- write the wiki
-
 ## Your first FXG blog
 
 You will need

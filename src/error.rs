@@ -101,8 +101,9 @@ impl Display for Error {
             | Self::StripPrefix(..) => {
                 write!(f, "{:?}", self)
             }
-            Self::Parsing { .. } => self.display_parsing_error(),
-            Self::Header(..) => self.display_header_error(),
+            Self::Parsing { .. } => self.display_parsing_error(f),
+            Self::Header(..) => self.display_header_error(f),
+            Self::NiceError(msg) => write!(f, "{} {msg}", "Error:".red().bold()),
         }
     }
 }
