@@ -14,5 +14,6 @@ Steps:
 2. In this terminal, run the command `cargo install fxg`
 3. When this finishes, run `fxg new my_first_fxg_blog`
 4. Open VSCode in the newly created folder.
-5. All features are used in this one file, you can view this as a [cheatsheet](https://gist.github.com/zTags/ba3f4ef67a1593f1b71fa33edcebaa2e)
-6. run `fxg build --start` to run a webserver with your blog
+5. Press `ctrl+P` and write `ext install tags.fxg-language-support`
+6. All features are used in this one file, you can view this as a [cheatsheet](https://gist.github.com/zTags/ba3f4ef67a1593f1b71fa33edcebaa2e)
+7. run `fxg build --start` to run a webserver with your blog
