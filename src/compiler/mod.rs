@@ -6,7 +6,7 @@ use std::{
     fs::{self, File},
     io::{self, Write},
     path::PathBuf,
-    time::{Duration, Instant},
+    time::{Duration, Instant, SystemTime},
 };
 
 mod document;
@@ -15,6 +15,7 @@ mod lexer;
 mod nodes;
 
 pub use document::Document;
+pub use header::DocumentHeader;
 pub use lexer::Lexer;
 
 use self::header::Image;
@@ -24,6 +25,8 @@ pub struct PageInformation {
     title: String,
     tags: Vec<String>,
     image: Option<Image>,
+    path: PathBuf,
+    date: SystemTime,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -73,7 +76,7 @@ pub fn build(project: Project) -> Result<Project, Error> {
     let html_files = project.collect_documents("html")?;
     let src = project.src_dir();
     let dest = project.dest_dir();
-    let template = project.read_template()?;
+    let template = fs::read_to_string(project.template())?;
     let mut known_tags = HashSet::new();
     let mut pages = vec![];
     let begin = Instant::now();
@@ -92,7 +95,8 @@ pub fn build(project: Project) -> Result<Project, Error> {
         io::stdout().flush()?;
         let mut destination = dest.join(relative);
         destination.set_extension("html");
-        let document = build_file(source, &template, destination)?;
+        let document = build_file(source, &template, &destination)?;
+        let relative_destination = destination.strip_prefix(&project.dest_dir())?;
         let header = document.header();
         for tag in &header.tags {
             known_tags.insert(tag.to_string());
@@ -101,6 +105,8 @@ pub fn build(project: Project) -> Result<Project, Error> {
             title: header.title,
             tags: header.tags,
             image: header.ogp.image,
+            path: relative_destination.to_path_buf(),
+            date: header.date,
         });
     }
 
@@ -115,6 +121,7 @@ pub fn build(project: Project) -> Result<Project, Error> {
         let destination = dest.join(relative);
         fs::copy(source, destination)?;
     }
+    pages.sort_by(|x, y| x.date.cmp(&y.date));
     print!("\r{}", " ".repeat(50));
     print!("\r{} metadata", "Bundling".blue().bold());
     println!();
@@ -143,7 +150,7 @@ pub fn build(project: Project) -> Result<Project, Error> {
     Ok(project)
 }
 
-fn build_file(file: PathBuf, template: &str, output: PathBuf) -> Result<Document, Error> {
+fn build_file(file: PathBuf, template: &str, output: &PathBuf) -> Result<Document, Error> {
     let data = fs::read_to_string(file)?;
     let lexer = Lexer::lex(&data)?;
     let document = Document::build(lexer)?;

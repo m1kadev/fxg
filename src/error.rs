@@ -37,18 +37,24 @@ pub enum Error {
     Io(io::Error),
     Yaml(serde_yaml::Error),
     Json(serde_json::Error),
-    #[cfg(feature = "developer")]
-    Hyper(hyper::Error),
     Header(String),
     StripPrefix(StripPrefixError),
     PathDisplayError,
-    #[cfg(feature = "developer")]
-    AddrParse(std::net::AddrParseError),
     Parsing {
         message: String,
         region: Range<usize>,
         source: String,
     },
+    NiceError(String),
+
+    #[cfg(feature = "developer")]
+    Regex(regex::Error),
+    #[cfg(feature = "developer")]
+    AddrParse(std::net::AddrParseError),
+    #[cfg(feature = "developer")]
+    UriParse(hyper::http::uri::InvalidUri),
+    #[cfg(feature = "developer")]
+    Hyper(hyper::Error),
 }
 
 map_error! {
@@ -58,6 +64,8 @@ map_error! {
     StripPrefixError => StripPrefix,
     #[developer] hyper::Error => Hyper,
     #[developer] std::net::AddrParseError => AddrParse,
+    #[developer] hyper::http::uri::InvalidUri => UriParse,
+    #[developer] regex::Error => Regex,
 }
 
 #[cfg(feature = "developer")]
@@ -70,11 +78,14 @@ impl Display for Error {
             | Self::Json(..)
             | Self::PathDisplayError
             | Self::Hyper(..)
-            | Self::AddrParse(..) => {
+            | Self::AddrParse(..)
+            | Self::UriParse(..)
+            | Self::Regex(..) => {
                 write!(f, "{:?}", self)
             }
-            Self::Parsing { .. } => self.display_parsing_error(),
-            Self::Header(..) => self.display_header_error(),
+            Self::Parsing { .. } => self.display_parsing_error(f),
+            Self::Header(..) => self.display_header_error(f),
+            Self::NiceError(msg) => write!(f, "{} {msg}", "Error:".red().bold()),
         }
     }
 }
@@ -118,7 +129,7 @@ fn row_and_col_from_index(string: &str, index: usize) -> (usize, usize) {
 }
 
 impl Error {
-    fn display_parsing_error(&self) -> std::fmt::Result {
+    fn display_parsing_error(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Self::Parsing {
             message,
             region,
@@ -133,37 +144,40 @@ impl Error {
                 col_end = lines[row_begin].len();
             }
 
-            eprintln!(
+            write!(
+                f,
                 "| [{}:{}] {} {}",
                 row_begin + 1,
                 col_begin,
                 "Parsing error:".red(),
                 message
-            );
-            eprintln!("| ");
+            )?;
+            write!(f, "| ")?;
             let line = lines[row_begin];
-            eprintln!(
+            write!(
+                f,
                 "| {} {}{}{}",
                 row_begin + 1,
                 &line[..col_begin],
                 &line[col_begin..col_end].red(),
                 &line[col_end..]
-            );
-            eprintln!(
+            )?;
+            write!(
+                f,
                 "| {} {}{}",
                 " ".repeat(line[..col_begin].len() + (row_begin + 1).to_string().len()),
                 "~".repeat(line[col_begin..col_end].len()).red(),
                 " ".repeat(line[col_end..].len())
-            );
+            )?;
         } else {
             unreachable!();
         }
         Ok(())
     }
 
-    fn display_header_error(&self) -> std::fmt::Result {
+    fn display_header_error(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Self::Header(msg) = self {
-            eprintln!("{}{}", "Header error:".red(), msg);
+            write!(f, "{}{}", "Header error:".red(), msg)?;
         } else {
             unreachable!();
         }

@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -5,6 +7,19 @@ pub struct DocumentHeader {
     pub ogp: OgpData,
     pub title: String,
     pub tags: Vec<String>,
+    pub date: SystemTime,
+}
+
+impl Default for DocumentHeader {
+    fn default() -> Self {
+        Self {
+            date: SystemTime::now(),
+            title: "".into(),
+            tags: vec![],
+            ogp: OgpData { typ: "".into(), description: "".into(), image: None }
+
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize)]

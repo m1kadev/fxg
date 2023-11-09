@@ -19,6 +19,8 @@ pub const DOG_IMAGE: &[u8] = include_bytes!("dog.png");
 
 #[cfg(feature = "developer")]
 pub fn new(root_folder: PathBuf) -> Result<(), Error> {
+    use crate::compiler::DocumentHeader;
+
     let mut path = root_folder.clone();
     fs::create_dir(root_folder)?;
 
@@ -55,7 +57,14 @@ pub fn new(root_folder: PathBuf) -> Result<(), Error> {
     // write src/index.png
     path.push("index.fxg");
     let mut index = File::create(&path)?;
-    index.write_all(TEMPLATE_FXG.as_bytes())?;
+    index.write_all(
+        TEMPLATE_FXG
+            .replace(
+                "{{HEADER}}",
+                &serde_yaml::to_string(&DocumentHeader::default())?,
+            )
+            .as_bytes(),
+    )?;
     drop(index);
     path.pop();
     path.pop();

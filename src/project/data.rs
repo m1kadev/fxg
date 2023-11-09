@@ -1,14 +1,10 @@
-use std::{
-    fs::{self, File},
-    io,
-    path::PathBuf,
-};
+use std::{fs::File, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
 use crate::error::Error;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectMeta {
     site_name: String,
     site_folder: String,
@@ -39,7 +35,10 @@ pub struct Project {
 impl Project {
     pub fn from_dir(mut base_path: PathBuf) -> Result<Self, Error> {
         base_path.push("config.yml");
-        let metadata = serde_yaml::from_reader::<File, ProjectMeta>(File::open(&base_path)?)?;
+        let metadata = serde_yaml::from_reader::<File, ProjectMeta>(
+            File::open(&base_path)
+                .map_err(|_| Error::NiceError("No FXG project file was found.".into()))?,
+        )?;
         base_path.pop();
         Ok(Self {
             metadata,
@@ -100,9 +99,9 @@ impl Project {
         self.base_path.clone()
     }
 
-    pub fn read_template(&self) -> Result<String, io::Error> {
+    pub fn template(&self) -> PathBuf {
         let mut path = self.base_path.clone();
         path.push(&self.metadata.template);
-        fs::read_to_string(path)
+        path
     }
 }
