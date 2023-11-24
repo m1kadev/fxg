@@ -13,14 +13,8 @@ pub enum DocumentNode {
     Italic(Vec<DocumentNode>),
     Underline(Vec<DocumentNode>),
 
-    Link {
-        text: Vec<DocumentNode>,
-        href: String,
-    },
-    Image {
-        alt: String,
-        src: String,
-    },
+    Link { text: String, href: String },
+    Image { alt: String, src: String },
 
     Text(String),
 
@@ -39,6 +33,15 @@ impl DocumentNode {
                 for node in $nodes {
                     node.as_html(output);
                 }
+
+                output.push_str(formatc!("</{}>", stringify!($closing)));
+            }};
+
+            (<$opening:ident $($attr:ident),* > {{ $node:ident }} </$closing:ident>) => {{
+                output.push_str(formatc!("<{}", stringify!($opening)));
+                $( output.push_str(&format!(" {}={:?} ", stringify!($attr), $attr)); )*
+                output.push('>');
+                output.push_str(&$node);
 
                 output.push_str(formatc!("</{}>", stringify!($closing)));
             }};
@@ -67,7 +70,7 @@ impl DocumentNode {
             Self::Underline(nodes) => html_tag!(<u>{nodes}</u>),
 
             Self::Image { alt, src } => html_tag!(<img src, alt />),
-            Self::Link { text, href } => html_tag!(<a href> {text} </a>),
+            Self::Link { text, href } => html_tag!(<a href> {{text}} </a>),
 
             Self::LineBreak => html_tag!(<br/>),
 

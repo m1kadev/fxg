@@ -39,13 +39,13 @@ pub enum Error {
     Json(serde_json::Error),
     Header(String),
     StripPrefix(StripPrefixError),
-    PathDisplayError,
+    PathDisplay,
     Parsing {
         message: String,
         region: Range<usize>,
         source: String,
     },
-    NiceError(String),
+    Nice(String),
 
     #[cfg(feature = "developer")]
     Regex(regex::Error),
@@ -76,7 +76,7 @@ impl Display for Error {
             | Self::Yaml(..)
             | Self::StripPrefix(..)
             | Self::Json(..)
-            | Self::PathDisplayError
+            | Self::PathDisplay
             | Self::Hyper(..)
             | Self::AddrParse(..)
             | Self::UriParse(..)
@@ -85,7 +85,7 @@ impl Display for Error {
             }
             Self::Parsing { .. } => self.display_parsing_error(f),
             Self::Header(..) => self.display_header_error(f),
-            Self::NiceError(msg) => write!(f, "{} {msg}", "Error:".red().bold()),
+            Self::Nice(msg) => write!(f, "{} {msg}", "Error:".red().bold()),
         }
     }
 }
@@ -97,13 +97,13 @@ impl Display for Error {
             Self::Io(..)
             | Self::Yaml(..)
             | Self::Json(..)
-            | Self::PathDisplayError
+            | Self::PathDisplay
             | Self::StripPrefix(..) => {
                 write!(f, "{:?}", self)
             }
             Self::Parsing { .. } => self.display_parsing_error(f),
             Self::Header(..) => self.display_header_error(f),
-            Self::NiceError(msg) => write!(f, "{} {msg}", "Error:".red().bold()),
+            Self::Nice(msg) => write!(f, "{} {msg}", "Error:".red().bold()),
         }
     }
 }

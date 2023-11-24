@@ -1,4 +1,7 @@
-use crate::{project::Project, Error};
+use crate::{
+    project::{Project, ProjectMeta},
+    Error,
+};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -27,6 +30,7 @@ pub struct PageInformation {
     image: Option<Image>,
     path: PathBuf,
     date: SystemTime,
+    summary: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -72,8 +76,8 @@ fn display_date(date: &Duration) -> String {
 }
 
 pub fn build(project: Project) -> Result<Project, Error> {
-    let fxg_files = project.collect_documents("fxg")?;
-    let html_files = project.collect_documents("html")?;
+    let fxg_files = project.collect_documents()?;
+    let misc_files = project.collect_misc()?;
     let src = project.src_dir();
     let dest = project.dest_dir();
     let template = fs::read_to_string(project.template())?;
@@ -82,7 +86,7 @@ pub fn build(project: Project) -> Result<Project, Error> {
     let begin = Instant::now();
 
     let mut progress = 0f32;
-    let out_of = (fxg_files.len() + html_files.len()) as f32;
+    let out_of = (fxg_files.len() + misc_files.len()) as f32;
     println!();
 
     for source in fxg_files {
@@ -95,22 +99,23 @@ pub fn build(project: Project) -> Result<Project, Error> {
         io::stdout().flush()?;
         let mut destination = dest.join(relative);
         destination.set_extension("html");
-        let document = build_file(source, &template, &destination)?;
+        let document = build_file(source, &template, &destination, project.metadata())?;
         let relative_destination = destination.strip_prefix(&project.dest_dir())?;
         let header = document.header();
         for tag in &header.tags {
             known_tags.insert(tag.to_string());
         }
         pages.push(PageInformation {
-            title: header.title,
-            tags: header.tags,
-            image: header.ogp.image,
+            title: header.title.clone(),
+            tags: header.tags.clone(),
+            image: header.ogp.image.clone(),
             path: relative_destination.to_path_buf(),
             date: header.date,
+            summary: header.summary.clone(),
         });
     }
 
-    for source in html_files {
+    for source in misc_files {
         progress += 1f32;
         let relative = source.strip_prefix(&src)?;
         let path = relative.as_os_str().to_string_lossy();
@@ -150,24 +155,36 @@ pub fn build(project: Project) -> Result<Project, Error> {
     Ok(project)
 }
 
-fn build_file(file: PathBuf, template: &str, output: &PathBuf) -> Result<Document, Error> {
-    let data = fs::read_to_string(file)?;
+fn build_file(
+    file: PathBuf,
+    template: &str,
+    output: &PathBuf,
+    meta: &ProjectMeta,
+) -> Result<Document, Error> {
+    let data = fs::read_to_string(&file)?;
     let lexer = Lexer::lex(&data)?;
     let document = Document::build(lexer)?;
 
-    if !template.contains("{{FXG_HEADER}}") {
+    if !template.contains("<fxg-header />") {
         return Err(Error::Header("No header field found!".to_string()));
     }
 
-    if !template.contains("{{FXG_OUTPUT}}") {
-        return Err(Error::Header("No output field found!".to_string()));
+    if !template.contains("<fxg-body />") {
+        return Err(Error::Header("No body field found!".to_string()));
     }
 
     let mut output_file = File::create(output)?;
+    let header = document.header();
     output_file.write_all(
         template
-            .replace("{{FXG_OUTPUT}}", &document.as_html())
-            .replace("{{FXG_HEADER}}", &document.header_html())
+            .replace(
+                "<fxg-header />",
+                &document.header_html(meta, file.file_stem().unwrap().to_str().unwrap()),
+            )
+            .replace("<fxg-body />", &document.as_html())
+            .replace("<fxg-title />", &header.title)
+            .replace("<fxg-tags />", &header.tags.join(", "))
+            .replace("<fxg-author />", &header.author)
             .as_bytes(),
     )?;
 

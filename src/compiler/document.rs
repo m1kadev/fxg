@@ -1,6 +1,7 @@
 use crate::compiler::lexer::Lexeme;
 use crate::compiler::nodes::DocumentNode;
 use crate::compiler::Lexer;
+use crate::project::ProjectMeta;
 use crate::Error;
 
 use super::header::DocumentHeader;
@@ -36,7 +37,7 @@ macro_rules! parser_xtx {
     };
 }
 
-pub struct Document(Vec<DocumentNode>, Option<DocumentHeader>);
+pub struct Document(Vec<DocumentNode>, DocumentHeader);
 
 impl Document {
     pub fn as_html(&self) -> String {
@@ -47,17 +48,16 @@ impl Document {
         output
     }
 
-    pub fn header_html(&self) -> String {
-        let mut output = String::new();
-        if let Some(header) = &self.1 {
-            output.push_str(&format!("<title>{}</title>", &header.title));
-            output.push_str(&header.ogp.build_ogp(&header.title, "", ""));
-        }
-        output
+    pub fn header_html(&self, meta: &ProjectMeta, title: &str) -> String {
+        self.1.ogp.build_ogp(
+            &self.1.title,
+            &meta.site_name,
+            &format!("{}{}", meta.site_name, title.replace(' ', "%20")), // very good url-ification code
+        )
     }
 
-    pub fn header(self) -> DocumentHeader {
-        self.1.unwrap()
+    pub fn header(&self) -> &DocumentHeader {
+        &self.1
     }
 
     pub fn build(mut lexer: Lexer) -> Result<Self, Error> {
@@ -174,7 +174,7 @@ impl Document {
             });
         }
         Ok(DocumentNode::Link {
-            text: Document::build(Lexer::lex(remainder.unwrap())?)?.0,
+            text: remainder.unwrap().into(),
             href: split.next().unwrap().to_string(),
         })
     }

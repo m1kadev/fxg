@@ -2,12 +2,14 @@ use std::time::SystemTime;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct DocumentHeader {
     pub ogp: OgpData,
     pub title: String,
     pub tags: Vec<String>,
     pub date: SystemTime,
+    pub summary: String,
+    pub author: String,
 }
 
 impl Default for DocumentHeader {
@@ -16,13 +18,18 @@ impl Default for DocumentHeader {
             date: SystemTime::now(),
             title: "".into(),
             tags: vec![],
-            ogp: OgpData { typ: "".into(), description: "".into(), image: None }
-
+            ogp: OgpData {
+                typ: "".into(),
+                description: "".into(),
+                image: None,
+            },
+            summary: "".into(),
+            author: "".into(),
         }
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct OgpData {
     #[serde(rename = "type")]
     pub typ: String,
@@ -31,11 +38,11 @@ pub struct OgpData {
     pub image: Option<Image>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Image {
     url: String,
-    width: Option<usize>,
-    height: Option<usize>,
+    width: usize,
+    height: usize,
     alt: Option<String>,
 }
 
@@ -63,18 +70,14 @@ impl OgpData {
                     alt
                 ));
             }
-            if let Some(width) = &img.width {
-                header.push_str(&format!(
-                    r#"<meta property="og:image:width" content="{}">"#,
-                    width
-                ));
-            }
-            if let Some(height) = &img.height {
-                header.push_str(&format!(
-                    r#"<meta property="og:image:height" content="{}">"#,
-                    height
-                ));
-            }
+            header.push_str(&format!(
+                r#"<meta property="og:image:width" content="{}">"#,
+                img.width
+            ));
+            header.push_str(&format!(
+                r#"<meta property="og:image:height" content="{}">"#,
+                img.height
+            ));
         }
 
         header

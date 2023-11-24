@@ -63,13 +63,12 @@ pub struct Lexer<'src> {
     slice_override: Option<Range<usize>>,
     peekable: Peekable<logos::Lexer<'src, Lexeme>>,
 
-    pub header: Option<DocumentHeader>,
+    pub header: DocumentHeader,
 }
 
 // public functions
 impl<'src> Lexer<'src> {
     pub fn lex(mut source: &'src str) -> Result<Self, Error> {
-        let mut header = None;
         // ! this code should technically be in document, but logos doesnt allow anchors
         if source.starts_with("---") {
             if source.matches("---").count() < 2 {
@@ -82,19 +81,23 @@ impl<'src> Lexer<'src> {
             let mut split = source.split("---");
             split.next();
             let yaml = split.next().unwrap();
-            let header_r = serde_yaml::from_str::<DocumentHeader>(yaml)?;
-            header = Some(header_r);
+            let header = serde_yaml::from_str::<DocumentHeader>(yaml)?;
             source = split.remainder().unwrap().trim();
+            let lexer = Lexeme::lexer(source);
+            let peekable = Lexeme::lexer(source).peekable();
+            Ok(Self {
+                lexer,
+                peekable,
+                slice_override: None,
+                header,
+            })
+        } else {
+            Err(Error::Parsing {
+                message: "No header found for this file".into(),
+                region: 0..1,
+                source: source.to_string(),
+            })
         }
-
-        let lexer = Lexeme::lexer(source);
-        let peekable = Lexeme::lexer(source).peekable();
-        Ok(Self {
-            lexer,
-            peekable,
-            slice_override: None,
-            header,
-        })
     }
 
     pub fn slice(&self) -> &str {

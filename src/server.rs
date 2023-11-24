@@ -18,11 +18,10 @@ pub fn download_file(url: String) -> Result<Vec<u8>, crate::Error> {
 
 async fn download_file_facaded(url: String) -> Result<Vec<u8>, crate::Error> {
     let https = HttpsConnector::new();
-    let client = Client::builder()
-        .build::<_, hyper::Body>(https);
+    let client = Client::builder().build::<_, hyper::Body>(https);
     let uri = url
         .parse()
-        .map_err(|_| crate::Error::NiceError(format!("The URL \"{url}\" isn't a valid URL.")))?;
+        .map_err(|_| crate::Error::Nice(format!("The URL \"{url}\" isn't a valid URL.")))?;
     let mut resp = client.get(uri).await?;
     dbg!(&resp);
     let mut data = vec![];

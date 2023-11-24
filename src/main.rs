@@ -16,9 +16,9 @@ use colored::Colorize;
 use compiler::build;
 use error::Error;
 
-use crate::{compiler::DocumentHeader, project::Project};
 #[cfg(feature = "developer")]
 use crate::project::TEMPLATE_FXG;
+use crate::{compiler::DocumentHeader, project::Project};
 
 #[derive(Parser)]
 pub struct Fxg {
@@ -68,10 +68,10 @@ fn do_cli(args: Subcommands) -> Result<(), Error> {
                 &path
                     .iter()
                     .last()
-                    .ok_or(Error::PathDisplayError)?
+                    .ok_or(Error::PathDisplay)?
                     .to_str()
-                    .ok_or(Error::PathDisplayError)?,
-                &path.as_os_str().to_str().ok_or(Error::PathDisplayError)?
+                    .ok_or(Error::PathDisplay)?,
+                &path.as_os_str().to_str().ok_or(Error::PathDisplay)?
             );
 
             #[cfg(feature = "developer")]
