@@ -11,7 +11,7 @@ You will need
 Steps:
 
 1. Open a terminal
-2. In this terminal, run the command `cargo install fxg`
+2. In this terminal, run the command `cargo +nightly install fxg` (you need to download [rust nightly](https://rust-lang.github.io/rustup/concepts/channels.html#working-with-nightly-rust) for this)
 3. When this finishes, run `fxg new my_first_fxg_blog`
 4. Open VSCode in the newly created folder.
 5. Press `ctrl+P` and write `ext install tags.fxg-language-support`
