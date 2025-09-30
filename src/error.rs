@@ -32,6 +32,7 @@ macro_rules! map_error {
     };
 }
 
+#[allow(dead_code)] // i fear refactoring
 #[derive(Debug)]
 pub enum Error {
     Io(io::Error),
@@ -51,10 +52,6 @@ pub enum Error {
     Regex(regex::Error),
     #[cfg(feature = "developer")]
     AddrParse(std::net::AddrParseError),
-    #[cfg(feature = "developer")]
-    UriParse(hyper::http::uri::InvalidUri),
-    #[cfg(feature = "developer")]
-    Hyper(hyper::Error),
 }
 
 map_error! {
@@ -62,9 +59,7 @@ map_error! {
     serde_yaml::Error => Yaml,
     serde_json::Error => Json,
     StripPrefixError => StripPrefix,
-    #[developer] hyper::Error => Hyper,
     #[developer] std::net::AddrParseError => AddrParse,
-    #[developer] hyper::http::uri::InvalidUri => UriParse,
     #[developer] regex::Error => Regex,
 }
 
@@ -77,9 +72,7 @@ impl Display for Error {
             | Self::StripPrefix(..)
             | Self::Json(..)
             | Self::PathDisplay
-            | Self::Hyper(..)
             | Self::AddrParse(..)
-            | Self::UriParse(..)
             | Self::Regex(..) => {
                 write!(f, "{:?}", self)
             }

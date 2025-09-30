@@ -166,11 +166,15 @@ fn build_file(
     let document = Document::build(lexer)?;
 
     if !template.contains("<fxg-header />") {
-        return Err(Error::Header("No header field found!".to_string()));
+        return Err(Error::Header(
+            "No header tag found in template HTML file!".to_string(),
+        ));
     }
 
     if !template.contains("<fxg-body />") {
-        return Err(Error::Header("No body field found!".to_string()));
+        return Err(Error::Header(
+            "No body tag found in template HTML file!".to_string(),
+        ));
     }
 
     let mut output_file = File::create(output)?;

@@ -1,7 +1,3 @@
-// fuck it
-#![feature(str_split_remainder)]
-#![feature(const_mut_refs)]
-
 use std::{env::current_dir, fs::File, io::Write, path::PathBuf, process::exit};
 
 use clap::{Parser, Subcommand};
@@ -9,16 +5,13 @@ use clap::{Parser, Subcommand};
 mod compiler;
 mod error;
 mod project;
-#[cfg(feature = "developer")]
-mod server;
 
 use colored::Colorize;
 use compiler::build;
 use error::Error;
 
-#[cfg(feature = "developer")]
-use crate::project::TEMPLATE_FXG;
-use crate::{compiler::DocumentHeader, project::Project};
+use crate::compiler::DocumentHeader;
+use crate::project::{Project, TEMPLATE_FXG};
 
 #[derive(Parser)]
 pub struct Fxg {
@@ -30,19 +23,18 @@ pub struct Fxg {
 pub enum Subcommands {
     Build {
         folder: Option<PathBuf>,
-        #[cfg(feature = "developer")]
-        #[arg(short, long)]
-        start: bool,
     },
 
     #[cfg(feature = "developer")]
-    New { folder: String },
+    New {
+        folder: String,
+    },
 
     #[cfg(feature = "developer")]
-    GetTheme { url: String, path: Option<PathBuf> },
-
-    #[cfg(feature = "developer")]
-    Page { name: String, path: Option<PathBuf> },
+    Page {
+        name: String,
+        path: Option<PathBuf>,
+    },
 
     #[cfg(feature = "contributor")]
     VomitDebug {
@@ -55,13 +47,9 @@ pub enum Subcommands {
 fn do_cli(args: Subcommands) -> Result<(), Error> {
     use Subcommands::*;
     match args {
-        Build {
-            folder,
-            #[cfg(feature = "developer")]
-            start,
-        } => {
+        Build { folder } => {
             let path = folder.unwrap_or(current_dir()?);
-            let project = build(Project::from_dir(path.clone())?)?;
+            let _ = build(Project::from_dir(path.clone())?)?;
             println!(
                 "{} project {} ({})",
                 "Building".bold().green(),
@@ -73,11 +61,6 @@ fn do_cli(args: Subcommands) -> Result<(), Error> {
                     .ok_or(Error::PathDisplay)?,
                 &path.as_os_str().to_str().ok_or(Error::PathDisplay)?
             );
-
-            #[cfg(feature = "developer")]
-            if start {
-                server::start_server(project.dest_dir())?;
-            }
             Ok(())
         }
 
@@ -87,29 +70,6 @@ fn do_cli(args: Subcommands) -> Result<(), Error> {
             path.push(&folder);
             project::new(path)?;
             println!("{} new project ({})", "Created".bold().green(), folder);
-            Ok(())
-        }
-
-        #[cfg(feature = "developer")]
-        GetTheme { url, path } => {
-            println!("gettheme");
-            let regex =
-                regex::Regex::new(r"(?m)https://gist\.github\.com/([a-zA-Z\-]+)/([0-9a-f]+)/?")?;
-            let theme_html = if let Some(captures) = regex.captures(&url) {
-                let user = &captures[1];
-                let id = &captures[2];
-                server::download_file(format!(
-                    "https://gist.githubusercontent.com/{user}/{id}/raw"
-                ))
-            } else {
-                server::download_file(url)
-            }?;
-            let folder = path.unwrap_or(current_dir()?);
-            let project = Project::from_dir(folder.clone())?;
-            let theme_file = project.template();
-            let mut file = File::create(theme_file)?;
-            file.write_all(&theme_html)?;
-
             Ok(())
         }
 

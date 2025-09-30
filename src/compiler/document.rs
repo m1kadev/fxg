@@ -153,9 +153,9 @@ impl Document {
                 });
             }
         }
-        let mut split = tag_contents.split(' ');
-        let href = split.next();
-        let remainder = split.remainder();
+        let tag_split = tag_contents.split_once(' ');
+        let href = tag_split.map(|(href, _)| href);
+        let remainder = tag_split.map(|(_, remainder)| remainder);
         if href.is_none() {
             let whole_region = region.start..lexer.span().end;
             return Err(Error::Parsing {
@@ -175,7 +175,7 @@ impl Document {
         }
         Ok(DocumentNode::Link {
             text: remainder.unwrap().into(),
-            href: split.next().unwrap().to_string(),
+            href: href.unwrap().to_string(),
         })
     }
 
@@ -215,25 +215,20 @@ impl Document {
                 });
             }
         }
-
-        let mut split = tag_contents.split(' ');
-        let src = split.next().map(|x| x.to_string());
-        let mut alt = split.remainder().map(|x| x.to_string());
-        if src.is_none() {
-            let whole_region = region.start..lexer.span().end;
-            return Err(Error::Parsing {
-                message: "No image source was found for this image element.".to_string(),
-                region: whole_region,
-                source: lexer.source().to_string(),
-            });
+        if tag_contents.contains(" ") {
+            let tag_split = tag_contents.split_once(' ');
+            let src = tag_split.map(|(src, _)| src);
+            let alt = tag_split.map(|(_, remainder)| remainder);
+            Ok(DocumentNode::Image {
+                src: src.unwrap().to_string(),
+                alt: alt.unwrap().to_string(),
+            })
+        } else {
+            Ok(DocumentNode::Image {
+                src: tag_contents,
+                alt: String::new(),
+            })
         }
-        if alt.is_none() {
-            alt = Some(String::new());
-        }
-        Ok(DocumentNode::Image {
-            src: src.unwrap(),
-            alt: alt.unwrap(),
-        })
     }
 
     fn parse_raw(lexer: &mut Lexer) -> Result<DocumentNode, Error> {

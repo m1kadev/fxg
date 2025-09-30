@@ -78,11 +78,9 @@ impl<'src> Lexer<'src> {
                     source: source.to_string(),
                 });
             }
-            let mut split = source.split("---");
-            split.next();
-            let yaml = split.next().unwrap();
+            let (yaml, remainder) = &source[3..].split_once("---").unwrap();
             let header = serde_yaml::from_str::<DocumentHeader>(yaml)?;
-            source = split.remainder().unwrap().trim();
+            source = remainder;
             let lexer = Lexeme::lexer(source);
             let peekable = Lexeme::lexer(source).peekable();
             Ok(Self {
@@ -92,6 +90,7 @@ impl<'src> Lexer<'src> {
                 header,
             })
         } else {
+            dbg!(&source);
             Err(Error::Parsing {
                 message: "No header found for this file".into(),
                 region: 0..1,
