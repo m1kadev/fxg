@@ -45,6 +45,7 @@ pub enum Error {
         message: String,
         region: Range<usize>,
         source: String,
+        yaml_offset: usize,
     },
     Nice(String),
 
@@ -128,6 +129,7 @@ impl Error {
             message,
             region,
             source,
+            yaml_offset,
         } = self
         {
             let (row_begin, col_begin) = row_and_col_from_index(source, region.start);
@@ -138,28 +140,29 @@ impl Error {
                 col_end = lines[row_begin].len();
             }
 
+            println!();
             write!(
                 f,
                 "| [{}:{}] {} {}",
-                row_begin + 1,
+                row_begin + 1 + yaml_offset,
                 col_begin,
                 "Parsing error:".red(),
                 message
             )?;
-            write!(f, "| ")?;
+            println!();
             let line = lines[row_begin];
             write!(
                 f,
-                "| {} {}{}{}",
-                row_begin + 1,
+                "| {}{}{}",
                 &line[..col_begin],
                 &line[col_begin..col_end].red(),
                 &line[col_end..]
             )?;
+            println!();
             write!(
                 f,
-                "| {} {}{}",
-                " ".repeat(line[..col_begin].len() + (row_begin + 1).to_string().len()),
+                "|{} {}{}",
+                " ".repeat(line[..col_begin].len() + (row_begin + 1).to_string().len() - 2),
                 "~".repeat(line[col_begin..col_end].len()).red(),
                 " ".repeat(line[col_end..].len())
             )?;

@@ -1,8 +1,8 @@
+use crate::Error;
+use crate::compiler::Lexer;
 use crate::compiler::lexer::Lexeme;
 use crate::compiler::nodes::DocumentNode;
-use crate::compiler::Lexer;
 use crate::project::ProjectMeta;
-use crate::Error;
 
 use super::header::DocumentHeader;
 
@@ -28,7 +28,8 @@ macro_rules! parser_xtx {
                             ),
                             region,
                             source: lexer.source().to_string(),
-                        })
+                            yaml_offset: lexer.yaml_line_offset,
+                        });
                     }
                 }
             }
@@ -138,6 +139,7 @@ impl Document {
                         ),
                         region,
                         source: lexer.source().to_string(),
+                        yaml_offset: lexer.yaml_line_offset,
                     });
                 }
                 tag_contents.push_str(lexer.slice());
@@ -150,6 +152,7 @@ impl Document {
                     ),
                     region,
                     source: lexer.source().to_string(),
+                    yaml_offset: lexer.yaml_line_offset,
                 });
             }
         }
@@ -162,6 +165,7 @@ impl Document {
                 message: "No href was found for this link element.".to_string(),
                 region: whole_region,
                 source: lexer.source().to_string(),
+                yaml_offset: lexer.yaml_line_offset,
             });
         }
         if remainder.is_none() {
@@ -171,6 +175,7 @@ impl Document {
                 message: "No link text was found for this link element.".to_string(),
                 region: whole_region,
                 source: lexer.source().to_string(),
+                yaml_offset: lexer.yaml_line_offset,
             });
         }
         Ok(DocumentNode::Link {
@@ -200,6 +205,7 @@ impl Document {
                         ),
                         region,
                         source: lexer.source().to_string(),
+                        yaml_offset: lexer.yaml_line_offset,
                     });
                 }
                 tag_contents.push_str(lexer.slice());
@@ -212,6 +218,7 @@ impl Document {
                     ),
                     region,
                     source: lexer.source().to_string(),
+                    yaml_offset: lexer.yaml_line_offset,
                 });
             }
         }
@@ -251,6 +258,7 @@ impl Document {
                     ),
                     region,
                     source: lexer.source().to_string(),
+                    yaml_offset: lexer.yaml_line_offset,
                 });
             }
         }

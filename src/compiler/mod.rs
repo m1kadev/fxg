@@ -1,6 +1,6 @@
 use crate::{
-    project::{Project, ProjectMeta},
     Error,
+    project::{Project, ProjectMeta},
 };
 use colored::Colorize;
 use serde::{Deserialize, Serialize};

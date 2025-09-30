@@ -62,7 +62,7 @@ pub struct Lexer<'src> {
     lexer: logos::Lexer<'src, Lexeme>,
     slice_override: Option<Range<usize>>,
     peekable: Peekable<logos::Lexer<'src, Lexeme>>,
-
+    pub yaml_line_offset: usize,
     pub header: DocumentHeader,
 }
 
@@ -76,6 +76,7 @@ impl<'src> Lexer<'src> {
                     message: "Failed to find closing --- for this ---".to_string(),
                     region: 0..3,
                     source: source.to_string(),
+                    yaml_offset: 0,
                 });
             }
             let (yaml, remainder) = &source[3..].split_once("---").unwrap();
@@ -87,6 +88,7 @@ impl<'src> Lexer<'src> {
                 lexer,
                 peekable,
                 slice_override: None,
+                yaml_line_offset: yaml.match_indices("\n").collect::<Vec<_>>().len(),
                 header,
             })
         } else {
@@ -95,6 +97,7 @@ impl<'src> Lexer<'src> {
                 message: "No header found for this file".into(),
                 region: 0..1,
                 source: source.to_string(),
+                yaml_offset: 0,
             })
         }
     }
