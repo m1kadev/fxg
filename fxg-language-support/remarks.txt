@@ -1,2 +1,0 @@
-keywords/patterns[2] => this should be markup.underline.fxg but vscode doesnt support this apparently, so i copied what md does
-keywords/patterns[3] => "
