@@ -19,50 +19,14 @@ Examples:
 
 Putting text between 2 double slashes (<>//italicised//</>) will render as italics.
 Putting text between 2 double exclamation marks (<>!!bold!!</>) will render as bold.
-Putting text between 2 double underscores (<>underlined</>) will render as bold.
+Putting text between 2 double underscores (<>__underlined__</>) will render as bold.
 These styles do not carry across lines, if any line has an unclosed <>//</>, <>!!</>, or <>__</>, this will output as-is into the final document.
 
 Examples:
 
 I'm //italicised//!
+
 I'm !!bold!!.
+
 I'm __underlined__.
 
-=== Code blocks ===
-
-Inline code blocks are defined using the <> <> </> and <> \</> </> tags. These cannot have language highlighting associated with them.
-Multiline code blocks have similar syntax, but may contain a language identifier for syntax highlighting. A multiline code blocks starts with <> <rs> </>, and ends with <> \</> </>. Multiline code blocks may not have any code on the lines that contains <> \</> </>. In the case there is code on the same lines, the parser must ignore the code block and continue parsing the document as if the opening or closing tag was normal text.
-
-Examples:
-
-<rs>
-fn main() {
-    println!("Hello, world!");
-}
-</>
-
-<>
-if is_pseudocode then
-    dont_highlight();
-</>
-
-=== Links and Images ===
-A link in FXG is written as <>{link_to_website Link text}</>
-An image is written the same, but using square brackets instead of curly ones. An alt-text is optional. <>[link_to_image]</> is valid FXG.
-
-Examples:
-{https://example.com/ Visit example.com}
-[https://picsum.photos/200]
-[https://picsum.photos/200 An example image]
-
-=== Escapes ===
-Special characters(1) can be escaped using the backslash <> \\ </>. Escaped characters should not always render as-is into the final document.
-Inside of code blocks, all formatting is ignored. Because <> \</> </> will close the code block, you have to use <> \\\</> </>.
-
-== Parsing details ==
-
-Leading or trailing whitespace on the same line must not affect parsing in any way.
-
-== Footnotes ==
-
-1: The special characters are: <> < </>, <> > </>, <> \\ </>, <> / </>, <> _ </> and <> ! </>.
