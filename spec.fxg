@@ -4,9 +4,9 @@
 
 === Headings ===
 
-There are 6 different forms of headings in FXG (like HTML). The html tags h1 through h6 are represented in FXG by the equals sign. Headings have to begin and end with an equal amount of equals signs, where the numer of equals signs indicate which HTML heading to use. One equals sign indicated h1, 6 equals signs indicate h6. A newline after a title must not render as a line break.
+There are 6 different forms of headings in FXG (like HTML). The HTML tags h1 through h6 are represented in FXG by the equals sign. Headings have to begin and end with an equal amount of equals signs, where the numer of equals signs indicate which HTML heading to use. One equals sign indicated h1, 6 equals signs indicate h6. A newline after a title must not render as a line break.
 
-Examples:
+==== Examples: ====
 
 = Heading 1 = 
 == Heading 2 ==
@@ -17,10 +17,7 @@ Examples:
 
 === Emphasis ===
 
-Putting text between 2 double slashes (<>//italicised//</>) will render as italics.
-Putting text between 2 double exclamation marks (<>!!bold!!</>) will render as bold.
-Putting text between 2 double underscores (<>__underlined__</>) will render as bold.
-These styles do not carry across lines, if any line has an unclosed <>//</>, <>!!</>, or <>__</>, this will output as-is into the final document.
+FXG supports 3 forms of emphasis. Bold (<>!!</>), cursive/italicised (<>//</>) and underlined (<>__</>). All 3 forms use the same syntax of <>[syntax maker]text[syntax marker]</>.
 
 Examples:
 
@@ -30,3 +27,12 @@ I'm !!bold!!.
 
 I'm __underlined__.
 
+do not format this !! with bold
+
+do not format this // with italics
+
+do not format this __ with underline
+
+// this is an escaped \// markup//
+
+this is // some escaped shit with a terminating /\\ balls
