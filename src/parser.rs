@@ -20,9 +20,15 @@ static UNICODE_PLACEHOLDERS: phf::Map<&'static str, &'static str> = phf_map! {
     "//" => "\u{E001}",
     ">" => "\u{E002}",
     "<" => "\u{E003}",
+    "__" => "\u{E004}",
+    "!!" => "\u{E005}",
+
 };
 
-pub fn parse(reader: &mut BufReader<File>) -> String {
+pub fn parse<T>(reader: &mut BufReader<T>) -> String
+where
+    T: std::io::Read,
+{
     let mut output = String::new();
     let mut lnbuf = String::new();
 
@@ -95,7 +101,11 @@ fn parse_title(line: &str) -> String {
     let mut output = String::new();
     let (prefix, _) = line.split_once(' ').unwrap();
     let header_size = prefix.len();
-    // header syntax is complete
+    // tags above <h6> don't exist
+    if header_size > 6 {
+        output.push_str(&parse_text(line));
+        return output;
+    }
 
     if line.ends_with(&str::repeat("=", header_size)) {
         let header_contents = &line[header_size..line.len() - 1 - header_size].trim();

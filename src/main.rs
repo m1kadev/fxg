@@ -7,6 +7,10 @@ use owo_colors::OwoColorize;
 
 mod parser;
 
+#[cfg(test)]
+#[path = "../test/mod.rs"]
+mod test;
+
 #[derive(Default, Debug)]
 struct Args {
     file: PathBuf,
