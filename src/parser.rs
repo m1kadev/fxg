@@ -1,9 +1,6 @@
 // TODO: macro for repeated push_str calls
 
-use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-};
+use std::io::{BufRead, BufReader};
 
 use phf_macros::phf_map;
 
@@ -22,7 +19,7 @@ static UNICODE_PLACEHOLDERS: phf::Map<&'static str, &'static str> = phf_map! {
     "<" => "\u{E003}",
     "__" => "\u{E004}",
     "!!" => "\u{E005}",
-
+    "</>" => "\u{E006}",
 };
 
 pub fn parse<T>(reader: &mut BufReader<T>) -> String
@@ -55,9 +52,22 @@ where
         lnbuf.clear();
     }
 
+    dbg!(&output);
+
+    output = output
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&qout;");
+
     for (key, placeholder) in UNICODE_PLACEHOLDERS.entries() {
-        output = output.replace(placeholder, key);
+        if *key == "</>" {
+            output = output.replace(placeholder, "&lt;/&gt;");
+        } else {
+            output = output.replace(placeholder, key);
+        }
     }
+
     output
 }
 
@@ -71,6 +81,7 @@ fn parse_markup(input: &str, markup: &'static str, html_tag: &'static str) -> St
         found = true;
         if &input[idx - 1..idx] == "\\" {
             line = line.replacen(&format!("\\{markup}"), escape!(markup), 1); // ? can we remove this format! call
+            found = false;
         } else {
             tag_contents = &line[..idx];
             tag_remainder = &line[idx + markup.len()..];
@@ -157,29 +168,36 @@ fn parse_text(line: &str) -> String {
             output.push_str(&line[..idx]);
             output.push_str(&parse_markup(text, "__", "u"));
         } else if smallest == code {
-            parse_code(line, &mut output, smallest);
+            let idx = smallest.unwrap();
+            let text = &line[idx + 2..];
+            output.push_str(&parse_code(text));
         } else {
         }
     }
     output
 }
 
-fn parse_code(line: &str, output: &mut String, smallest: Option<usize>) {
-    let idx = smallest.unwrap();
-    output.push_str(&line[..idx]);
-    let mut code_contents = line[idx + 2..].to_string();
-    let mut tag_contents = String::new();
-    let mut leftovers = "";
-    while let Some(idx) = code_contents.find("</>") {
-        let closing_tag = &code_contents[idx - 1..idx + 3];
-        if closing_tag == "\\</>" {
-            code_contents = code_contents.replacen("\\</>", "\u{E000}", 1);
+fn parse_code(line_dat: &str) -> String {
+    let mut output = String::new();
+    let mut line = line_dat.to_string();
+    let mut tag_contents = "";
+    let mut tag_remainder = "";
+    while let Some(idx) = line.find("</>") {
+        if &line[idx - 1..idx] == "\\" {
+            line = line.replacen("\\</>", escape!("</>"), 1);
         } else {
-            tag_contents.push_str(&code_contents[..idx]);
-            leftovers = &code_contents[idx..];
+            tag_contents = &line[..idx];
+            tag_remainder = &line[idx + 3..];
             break;
         }
     }
-    output.push_str(&format!("<code>{}</code>", tag_contents));
-    output.push_str(&parse_text(leftovers));
+    output.push_str(escape!("<"));
+    output.push_str("code");
+    output.push_str(escape!(">"));
+    output.push_str(tag_contents);
+    output.push_str(escape!("<"));
+    output.push_str("/code");
+    output.push_str(escape!(">"));
+    output.push_str(&parse_text(tag_remainder));
+    output
 }

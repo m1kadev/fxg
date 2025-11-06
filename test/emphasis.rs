@@ -3,110 +3,20 @@ mod parser;
 
 // ? NOTE: the space at the end is intended
 
-#[test]
-pub fn cursive() {
-    parser_test! {
-        "//cursive//"
-        =>
-        "<em>cursive</em> "
-    }
-}
+parser_tests! {
+    [cursive] { "//cursive//" -> "<em>cursive</em>" };
+    [bold] { "!!bold!!" -> "<strong>bold</strong>" };
+    [underline] { "__underline__" -> "<u>underline</u>" };
 
-#[test]
-pub fn bold() {
-    parser_test! {
-        "!!bold!!"
-        =>
-        "<strong>bold</strong> "
-    }
-}
+    [cursive_with_escape] { "//cursive \\// still cursive//" -> "<em>cursive // still cursive</em>" };
+    [bold_with_escape] { "!!bold \\!! still bold!!" -> "<strong>bold !! still bold</strong>" };
+    [underline_with_escape] { "__underline \\__ still underline__" -> "<u>underline __ still underline</u>" };
 
-#[test]
-pub fn underline() {
-    parser_test! {
-        "__underlined__"
-        =>
-        "<u>underlined</u> "
-    }
-}
+    [cursive_no_format] { "//cursive" -> "//cursive" };
+    [bold_no_format] { "!!bold" -> "!!bold" };
+    [underline_no_format] { "__underline" -> "__underline" };
 
-#[test]
-pub fn cursive_with_escape() {
-    parser_test! {
-        "//cursive \\// escaped//"
-        =>
-        "<em>cursive // escaped</em> "
-    }
-}
-
-#[test]
-pub fn bold_with_escape() {
-    parser_test! {
-        "!!bold \\!! escaped!!"
-        =>
-        "<strong>bold !! escaped</strong> "
-    }
-}
-
-#[test]
-pub fn underline_with_escape() {
-    parser_test! {
-        "__underline \\__ escaped__"
-        =>
-        "<u>underline __ escaped</u> "
-    }
-}
-
-#[test]
-pub fn cursive_no_format() {
-    parser_test! {
-        "// cursive unformat"
-        =>
-        "// cursive unformat "
-    }
-}
-
-#[test]
-pub fn bold_no_format() {
-    parser_test! {
-        "!! bold unformat"
-        =>
-        "!! bold unformat "
-    }
-}
-
-#[test]
-pub fn underline_no_format() {
-    parser_test! {
-        "__ underline unformat"
-        =>
-        "__ underline unformat "
-    }
-}
-
-#[test]
-pub fn cursive_with_escaped_final_tag() {
-    parser_test! {
-        "//cursive unformat \\//"
-        =>
-        "//cursive unformat // "
-    }
-}
-
-#[test]
-pub fn bold_with_escaped_final_tag() {
-    parser_test! {
-        "!!bold unformat \\!!"
-        =>
-        "!!bold unformat !! "
-    }
-}
-
-#[test]
-pub fn underline_with_escaped_final_tag() {
-    parser_test! {
-        "__underline unformat \\__"
-        =>
-        "__underline unformat __ "
-    }
+    [cursive_with_escaped_final_tag] { "//cursive \\//" -> "//cursive //" };
+    [bold_with_escaped_final_tag] { "!!bold \\!!" -> "!!bold !!" };
+    [underline_with_escaped_final_tag] { "__underline \\__" -> "__underline __" };
 }
