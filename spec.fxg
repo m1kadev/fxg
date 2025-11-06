@@ -1,10 +1,14 @@
 = FXG markup language specification v1 =
 
+== Why? ==
+
+Markdown, while being the standard format for most plaintext markup, does not do its job very well. There are <#https://daringfireball.net/projects/markdown/syntax#header Multiple ways> to define headers, a single character (<>*</>) has several meanings (<>*</> is italicised, <>**</> is bold), and I generally do not like it aestethically speaking. With FXG I intend to create a better, more obvious plaintext markup language.
+
 == Syntax ==
 
 === Headings ===
 
-There are 6 different forms of headings in FXG (like HTML). The HTML tags h1 through h6 are represented in FXG by the equals sign. Headings have to begin and end with an equal amount of equals signs, where the numer of equals signs indicate which HTML heading to use. One equals sign indicated h1, 6 equals signs indicate h6. A newline after a title must not render as a line break.
+There are 6 different forms of headings in FXG (like HTML). The HTML tags h1 through h6 are represented in FXG by the equals sign. Headings have to begin and end with an equal amount of equals signs, where the numer of equals signs indicate which HTML heading to use. One equals sign indicated h1, 6 equals signs indicate h6. In the case that the header does not have a closing tag, or too many/little equals signs, it should render as-is into the final document. A newline after a title must not render as a line break.
 
 ==== Examples: ====
 
@@ -17,9 +21,9 @@ There are 6 different forms of headings in FXG (like HTML). The HTML tags h1 thr
 
 === Emphasis ===
 
-FXG supports 3 forms of emphasis. Bold (<>!!</>), cursive/italicised (<>//</>) and underlined (<>__</>). All 3 forms use the same syntax of <>[syntax maker]text[syntax marker]</>.
+FXG supports 3 forms of emphasis. Bold (<>!!</>), cursive/italicised (<>//</>) and underlined (<>__</>). All 3 forms use the same syntax of <>[syntax maker]text[syntax marker]</>. Emphasis tags that do not have a closing tag render into the document as-is (i.e. <>like // this</>).
 
-Examples:
+==== Examples: ====
 
 I'm //italicised//!
 
@@ -27,12 +31,12 @@ I'm !!bold!!.
 
 I'm __underlined__.
 
-do not format this !! with bold
+=== Images and Links ===
 
-do not format this // with italics
+Links are defined in FXG using the syntax <><#link Human-readable text></>. Images are defined exactly the same, but using <><!</> instead of <><#</>.
 
-do not format this __ with underline
+==== Examples ====
 
-// this is an escaped \// markup//
+<#https://example.com/ My favourite website!>
 
-this is // some escaped shit with a terminating /\\ balls
+<!https://picsum.photos/200 A Random Picture>

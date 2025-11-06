@@ -18,6 +18,7 @@ struct Args {
     options: HashMap<String, String>,
 }
 
+#[inline]
 fn warn<T>(msg: &T)
 where
     T: Display + ?Sized,
@@ -25,6 +26,7 @@ where
     eprintln!("fxg: {}: {}", "Warn".yellow().bold(), msg);
 }
 
+#[inline]
 fn error<T>(msg: &T, code: i32) -> !
 where
     T: Display + ?Sized,

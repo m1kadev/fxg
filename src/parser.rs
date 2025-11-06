@@ -20,6 +20,7 @@ static UNICODE_PLACEHOLDERS: phf::Map<&'static str, &'static str> = phf_map! {
     "__" => "\u{E004}",
     "!!" => "\u{E005}",
     "</>" => "\u{E006}",
+    "\"" => "\u{E007}",
 };
 
 pub fn parse<T>(reader: &mut BufReader<T>) -> String
@@ -51,8 +52,6 @@ where
         }
         lnbuf.clear();
     }
-
-    dbg!(&output);
 
     output = output
         .replace("&", "&amp;")
@@ -143,7 +142,9 @@ fn parse_text(line: &str) -> String {
     let bold = line.find("!!");
     let underline = line.find("__");
     let code = line.find("<>");
-    let smallest = [cursive, bold, underline, code]
+    let link = line.find("<#");
+    let image = line.find("<!");
+    let smallest = [cursive, bold, underline, code, link, image]
         .iter()
         .filter(|x| x.is_some())
         .map(|x| x.unwrap())
@@ -170,8 +171,54 @@ fn parse_text(line: &str) -> String {
         } else if smallest == code {
             let idx = smallest.unwrap();
             let text = &line[idx + 2..];
+            output.push_str(&line[..idx]);
             output.push_str(&parse_code(text));
-        } else {
+        } else if smallest == link {
+            let idx = smallest.unwrap();
+            output.push_str(&line[..idx]);
+            let data = &line[idx + 2..];
+            if let Some(idx_end) = data.find(">") {
+                let contents = &data[..idx_end];
+                if let Some((link, desc)) = contents.split_once(" ") {
+                    output.push_str(escape!("<"));
+                    output.push_str("a href=");
+                    output.push_str(escape!("\""));
+                    output.push_str(link);
+                    output.push_str(escape!("\""));
+                    output.push_str(escape!(">"));
+                    output.push_str(&parse_text(desc));
+                    output.push_str(escape!("<"));
+                    output.push_str("a");
+                    output.push_str(escape!(">"));
+                    output.push_str(&parse_text(&data[idx_end + 1..]));
+                } else {
+                }
+            } else {
+                // output into document normally
+            }
+        } else if smallest == image {
+            let idx = smallest.unwrap();
+            output.push_str(&line[..idx]);
+            let data = &line[idx + 2..];
+            if let Some(idx_end) = data.find(">") {
+                let contents = &data[..idx_end];
+                if let Some((link, alt)) = contents.split_once(" ") {
+                    output.push_str(escape!("<"));
+                    output.push_str("img src=");
+                    output.push_str(escape!("\""));
+                    output.push_str(link);
+                    output.push_str(escape!("\""));
+                    output.push_str(" alt=");
+                    output.push_str(escape!("\""));
+                    output.push_str(alt);
+                    output.push_str(escape!("\""));
+                    output.push_str(escape!(">"));
+                    output.push_str(&parse_text(&data[idx_end + 1..]));
+                } else {
+                }
+            } else {
+                // output into document normally
+            }
         }
     }
     output
@@ -191,6 +238,7 @@ fn parse_code(line_dat: &str) -> String {
             break;
         }
     }
+
     output.push_str(escape!("<"));
     output.push_str("code");
     output.push_str(escape!(">"));
