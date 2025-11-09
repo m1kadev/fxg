@@ -33,10 +33,14 @@ I'm __underlined__.
 
 === Images and Links ===
 
-Links are defined in FXG using the syntax <><#link Human-readable text></>. Images are defined exactly the same, but using <><!</> instead of <><#</>.
+Links are defined in FXG using the syntax <><#link Human-readable text></>. Images are defined exactly the same, but using <><!</> instead of <><#</>. For images, if an alt-text is not provided, the <>alt</> tag should be omitted. For links, if the link name is not provided, use the link for the contents too.
 
 ==== Examples ====
 
 <#https://example.com/ My favourite website!>
 
+<#https://google.com/>
+
 <!https://picsum.photos/200 A Random Picture>
+
+<!https://picsum.photos/200>

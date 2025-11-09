@@ -188,13 +188,25 @@ fn parse_text(line: &str) -> String {
                     output.push_str(escape!(">"));
                     output.push_str(&parse_text(desc));
                     output.push_str(escape!("<"));
-                    output.push_str("a");
+                    output.push_str("/a");
                     output.push_str(escape!(">"));
                     output.push_str(&parse_text(&data[idx_end + 1..]));
                 } else {
+                    output.push_str(escape!("<"));
+                    output.push_str("a href=");
+                    output.push_str(escape!("\""));
+                    output.push_str(contents);
+                    output.push_str(escape!("\""));
+                    output.push_str(escape!(">"));
+                    output.push_str(contents);
+                    output.push_str(escape!("<"));
+                    output.push_str("/a");
+                    output.push_str(escape!(">"));
+                    output.push_str(&parse_text(&data[idx_end + 1..]));
                 }
             } else {
-                // output into document normally
+                output.push_str("<#");
+                output.push_str(&parse_text(&line[idx + 2..]));
             }
         } else if smallest == image {
             let idx = smallest.unwrap();
@@ -215,9 +227,16 @@ fn parse_text(line: &str) -> String {
                     output.push_str(escape!(">"));
                     output.push_str(&parse_text(&data[idx_end + 1..]));
                 } else {
+                    output.push_str(escape!("<"));
+                    output.push_str("img src=");
+                    output.push_str(escape!("\""));
+                    output.push_str(contents);
+                    output.push_str(escape!("\""));
+                    output.push_str(escape!(">"));
                 }
             } else {
-                // output into document normally
+                output.push_str("<!");
+                output.push_str(&parse_text(&line[idx + 2..]));
             }
         }
     }
