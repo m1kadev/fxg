@@ -21,6 +21,7 @@ static UNICODE_PLACEHOLDERS: phf::Map<&'static str, &'static str> = phf_map! {
     "!!" => "\u{E005}",
     "</>" => "\u{E006}",
     "\"" => "\u{E007}",
+    "\\" => "\u{E008}"
 };
 
 pub fn parse<T>(reader: &mut BufReader<T>) -> String
@@ -56,8 +57,8 @@ where
     output = output
         .replace("&", "&amp;")
         .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace("\"", "&qout;");
+        .replace(">", "&gt;");
+    //.replace("\"", "&qout;");
 
     for (key, placeholder) in UNICODE_PLACEHOLDERS.entries() {
         if *key == "</>" {
@@ -249,8 +250,20 @@ fn parse_code(line_dat: &str) -> String {
     let mut tag_contents = "";
     let mut tag_remainder = "";
     while let Some(idx) = line.find("</>") {
-        if &line[idx - 1..idx] == "\\" {
-            line = line.replacen("\\</>", escape!("</>"), 1);
+        // 92 is the backslash codepoint
+        if line.as_bytes()[idx - 1] == 92 {
+            // if the character before THAT is also a backslash
+            if idx > 1 && line.as_bytes()[idx - 2] == 92 {
+                // triple backslash; edge case handling purely to allow anything to be inside code tags.
+                if idx > 2 && line.as_bytes()[idx - 3] == 92 {
+                    line.replace_range(idx - 3..idx - 1, escape!("\\"));
+                    continue;
+                } else {
+                    line.replace_range(idx - 2..idx, escape!("\\"));
+                }
+            } else {
+                line = line.replacen("\\</>", escape!("</>"), 1);
+            }
         } else {
             tag_contents = &line[..idx];
             tag_remainder = &line[idx + 3..];

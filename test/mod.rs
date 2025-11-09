@@ -17,3 +17,4 @@ pub mod code;
 pub mod emphasis;
 pub mod headings;
 pub mod html_entities;
+pub mod image;

@@ -31,6 +31,15 @@ I'm !!bold!!.
 
 I'm __underlined__.
 
+
+=== Code blocks === 
+
+An inline code tag is opened using <><></>, and closed using <>\</></>. No parsing happens inside of codeblocks (i.e. <><>//balls//\</></> does not become italicised). In the case that inside a code block you need to write a <>\</></>, you have to escape it using <>\\</>. There is edgecase syntax for <>\\\</></>. which is <><>\\\\\</>\</></>.
+
+==== Examples ====
+
+<>println!("{}, world!", "Hello")</>
+
 === Images and Links ===
 
 Links are defined in FXG using the syntax <><#link Human-readable text></>. Images are defined exactly the same, but using <><!</> instead of <><#</>. For images, if an alt-text is not provided, the <>alt</> tag should be omitted. For links, if the link name is not provided, use the link for the contents too.
