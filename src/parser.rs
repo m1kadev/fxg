@@ -7,25 +7,7 @@ use std::{
 
 use phf_macros::phf_map;
 
-macro_rules! escape {
-    ($item:ident) => {
-        UNICODE_PLACEHOLDERS.get($item).unwrap()
-    };
-    ($item:literal) => {
-        UNICODE_PLACEHOLDERS.get($item).unwrap()
-    };
-}
-
-static UNICODE_PLACEHOLDERS: phf::Map<&'static str, &'static str> = phf_map! {
-    "//" => "\u{E001}",
-    ">" => "\u{E002}",
-    "<" => "\u{E003}",
-    "__" => "\u{E004}",
-    "!!" => "\u{E005}",
-    "</>" => "\u{E006}",
-    "\"" => "\u{E007}",
-    "\\" => "\u{E008}"
-};
+use crate::{UNICODE_PLACEHOLDERS, blockqoutes::parse_blockqoute, escape};
 
 pub fn parse<T>(reader: &mut BufReader<T>) -> String
 where
@@ -37,6 +19,7 @@ where
     let mut last_line_was_title = false;
 
     while let Ok(n) = reader.read_line(&mut lnbuf) {
+        dbg!(&lnbuf);
         let line = lnbuf.trim();
         if n == 0 {
             // EOF reached
@@ -50,9 +33,7 @@ where
             output.push_str("br/");
             output.push_str(escape!(">"));
         } else if lnbuf.starts_with('-') {
-            let line = lnbuf.trim();
             let chars = line.chars().collect::<HashSet<char>>();
-            dbg!(&chars);
             if chars.len() == 1 && line.len() >= 3 {
                 output.push_str(escape!("<"));
                 output.push_str("hr");
@@ -62,6 +43,13 @@ where
                 output.push(' ');
                 last_line_was_title = false;
             }
+        } else if lnbuf.starts_with('>') {
+            // this requires statekeeping outside the scope
+            let (blockqoute, line) = parse_blockqoute(reader, lnbuf.clone()); // ? elegance
+            output.push_str(&blockqoute);
+            lnbuf.clear();
+            lnbuf.push_str(&line[1..]);
+            continue;
         } else {
             output.push_str(&parse_text(line));
             output.push(' ');
@@ -152,7 +140,7 @@ fn parse_title(line: &str) -> String {
     output
 }
 
-fn parse_text(line: &str) -> String {
+pub fn parse_text(line: &str) -> String {
     let mut output = String::new();
     // find opening tag
     let cursive = line.find("//");

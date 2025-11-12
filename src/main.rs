@@ -4,7 +4,9 @@ use std::{
 };
 
 use owo_colors::OwoColorize;
+use phf_macros::phf_map;
 
+mod blockqoutes;
 mod parser;
 
 #[cfg(test)]
@@ -17,6 +19,27 @@ struct Args {
     flags: Vec<String>,
     options: HashMap<String, String>,
 }
+
+#[macro_export]
+macro_rules! escape {
+    ($item:ident) => {
+        $crate::UNICODE_PLACEHOLDERS.get($item).unwrap()
+    };
+    ($item:literal) => {
+        $crate::UNICODE_PLACEHOLDERS.get($item).unwrap()
+    };
+}
+
+static UNICODE_PLACEHOLDERS: phf::Map<&'static str, &'static str> = phf_map! {
+    "//" => "\u{E001}",
+    ">" => "\u{E002}",
+    "<" => "\u{E003}",
+    "__" => "\u{E004}",
+    "!!" => "\u{E005}",
+    "</>" => "\u{E006}",
+    "\"" => "\u{E007}",
+    "\\" => "\u{E008}"
+};
 
 #[inline]
 fn warn<T>(msg: &T)

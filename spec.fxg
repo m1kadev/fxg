@@ -56,7 +56,7 @@ Links are defined in FXG using the syntax <><#link Human-readable text></>. Imag
 
 === Horizontal rules ===
 
-A horizontal rule is written using 5 or more hypens consecutively on a newline. If there is any text after the hypens, it is parsed as normal text.
+A horizontal rule is written using 5 or more hypens consecutively on a newline. If there is any text after the hypens, it is parsed as normal text. Horizontal rules can be escaped by prepending a space to the line containing the rule.
 
 ==== Examples ====
 
@@ -67,6 +67,8 @@ A horizontal rule is written using 5 or more hypens consecutively on a newline. 
 -----    
 
 ----- some text
+
+ ----
 
 
 === Blockqoutes ===
