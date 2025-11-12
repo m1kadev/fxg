@@ -1,5 +1,4 @@
-#[path = "../src/parser.rs"]
-mod parser;
+use crate::parser;
 
 // ? NOTE: the space at the end is intended
 

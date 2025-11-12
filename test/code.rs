@@ -1,5 +1,4 @@
-#[path = "../src/parser.rs"]
-mod parser;
+use crate::parser;
 
 parser_tests! {
     [code] { "<>code</>" -> "<code>code</code>" };

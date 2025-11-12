@@ -1,5 +1,4 @@
-#[path = "../src/parser.rs"]
-mod parser;
+use crate::parser;
 
 parser_tests! {
     [link] { "<#https://example.com/ Example>" -> "<a href=\"https://example.com/\">Example</a>" };

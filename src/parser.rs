@@ -1,6 +1,9 @@
 // TODO: macro for repeated push_str calls
 
-use std::io::{BufRead, BufReader};
+use std::{
+    collections::HashSet,
+    io::{BufRead, BufReader},
+};
 
 use phf_macros::phf_map;
 
@@ -46,6 +49,19 @@ where
             output.push_str(escape!("<"));
             output.push_str("br/");
             output.push_str(escape!(">"));
+        } else if lnbuf.starts_with('-') {
+            let line = lnbuf.trim();
+            let chars = line.chars().collect::<HashSet<char>>();
+            dbg!(&chars);
+            if chars.len() == 1 && line.len() >= 3 {
+                output.push_str(escape!("<"));
+                output.push_str("hr");
+                output.push_str(escape!(">"));
+            } else {
+                output.push_str(&parse_text(line));
+                output.push(' ');
+                last_line_was_title = false;
+            }
         } else {
             output.push_str(&parse_text(line));
             output.push(' ');

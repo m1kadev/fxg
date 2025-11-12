@@ -53,3 +53,46 @@ Links are defined in FXG using the syntax <><#link Human-readable text></>. Imag
 <!https://picsum.photos/200 A Random Picture>
 
 <!https://picsum.photos/200>
+
+=== Horizontal rules ===
+
+A horizontal rule is written using 5 or more hypens consecutively on a newline. If there is any text after the hypens, it is parsed as normal text.
+
+==== Examples ====
+
+----- 
+
+----------
+
+-----    
+
+----- some text
+
+
+=== Blockqoutes ===
+
+FXG uses e-mail style blockqouting. Any line that begins with <>></> will be in a blockqoute. If there is a line that starts with <>-</> after a blockqoute, this will be parsed as a qoute source. You can have blockqoutes inside other blockqoutes.
+
+==== Examples ====
+
+> hello :))
+
+> 2 + 2 = 5
+- Radiohead, 2003
+
+> This is a nested blockqoute:
+> > Someone said this once
+
+
+=== Tables ===
+
+All FXG tables start with a defenition of the first row, defining what the columns below mean. It has to start with a pipe (<>|</>), then the names for the columns, seperated by pipes, then a closing pipe.
+After this, a line seperating the table header from its contents is required. This is the same syntax as the table header, but with hypens (<>-</>) used for padding. The pipes must line up.
+After this, the contents of the table are written. Using the same syntax as the table header, but with the names replaced with the values. These do not need to be separated with hypens. This can repeat until the table is finished.
+
+
+==== Examples ====
+
+| Position (m) | Time (s) |
+| ------------ | -------- |
+|            0 |        1 |

@@ -1,5 +1,4 @@
-#[path = "../src/parser.rs"]
-mod parser;
+use crate::parser;
 
 parser_tests! {
     [header_1] { "= Heading 1 ="           -> "<h1>Heading 1</h1>" };

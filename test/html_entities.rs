@@ -1,5 +1,4 @@
-#[path = "../src/parser.rs"]
-mod parser;
+use crate::parser;
 
 parser_tests! {
     [html_entities_amp] { "&" -> "&amp;" };

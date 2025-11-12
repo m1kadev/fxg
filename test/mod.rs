@@ -16,5 +16,6 @@ macro_rules! parser_tests {
 pub mod code;
 pub mod emphasis;
 pub mod headings;
+pub mod horizontal_rules;
 pub mod html_entities;
 pub mod image;
