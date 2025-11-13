@@ -43,12 +43,9 @@ where
                 last_line_was_title = false;
             }
         } else if lnbuf.starts_with('>') {
-            // this requires statekeeping outside the scope
-            let (blockqoute, line) = parse_blockqoute(reader, lnbuf.clone()); // ? elegance
+            let (blockqoute, _) = parse_blockqoute(reader, lnbuf.clone()); // ? elegance
             output.push_str(&blockqoute);
-            lnbuf.clear();
-            lnbuf.push_str(&line[1..]);
-            continue;
+            last_line_was_title = false;
         } else {
             output.push_str(&parse_text(line));
             output.push(' ');

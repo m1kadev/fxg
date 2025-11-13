@@ -7,6 +7,7 @@ use owo_colors::OwoColorize;
 use phf_macros::phf_map;
 
 mod blockqoutes;
+mod extensions;
 mod parser;
 
 #[cfg(test)]
