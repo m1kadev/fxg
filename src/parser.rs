@@ -19,7 +19,6 @@ where
     let mut last_line_was_title = false;
 
     while let Ok(n) = reader.read_line(&mut lnbuf) {
-        dbg!(&lnbuf);
         let line = lnbuf.trim();
         if n == 0 {
             // EOF reached

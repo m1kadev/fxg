@@ -9,47 +9,35 @@ pub fn parse_blockqoute<T>(reader: &mut BufReader<T>, mut line: String) -> (Stri
 where
     T: Read,
 {
-    let mut output = String::new();
-    output.push_str(escape!("<"));
-    output.push_str("figure");
-    output.push_str(escape!(">"));
-    output.push_str(escape!("<"));
-    output.push_str("blockqoute");
-    output.push_str(escape!(">"));
-    dbg!(&line[1..]);
-    output.push_str(&parse_text(&line[1..]));
-    line.clear();
-    while let Ok(length) = reader.read_line(&mut line) {
-        dbg!(&line);
-        if length == 0 {
+    parse_blockqoute_internal(reader, line, 1)
+}
+
+fn parse_blockqoute_internal<T>(
+    reader: &mut BufReader<T>,
+    line: String,
+    depth: usize,
+) -> (String, String)
+where
+    T: Read,
+{
+    let mut qoute = line;
+    let mut line = String::new();
+    while let Ok(len) = reader.read_line(&mut line) {
+        if len == 0 {
             break;
         }
-        if line.starts_with('>') {
-            output.push_str(&parse_text(&line));
-        } else if line.starts_with('-') {
-            output.push_str(escape!("<"));
-            output.push_str("/blockqoute");
-            output.push_str(escape!(">"));
-            output.push_str(escape!("<"));
-            output.push_str("figcaption");
-            output.push_str(escape!(">"));
-            output.push_str(&parse_text(&line[1..]));
-            output.push_str(escape!("<"));
-            output.push_str("/figcaption");
-            output.push_str(escape!(">"));
-            output.push_str(escape!("<"));
-            output.push_str("/figure");
-            output.push_str(escape!(">"));
+        if line.starts_with(&['>', '-']) {
+            qoute.push_str(&line);
         } else {
-            output.push_str(escape!("<"));
-            output.push_str("/blockqoute");
-            output.push_str(escape!(">"));
-            output.push_str(escape!("<"));
-            output.push_str("/figure");
-            output.push_str(escape!(">"));
             break;
         }
         line.clear();
     }
-    (output, line)
+    let mut qoute_data: Vec<(usize, &str)> = vec![];
+    for line in qoute.lines() {
+        let qoutes = line
+            .find(|c: char| !c.is_whitespace() && !['>', '-'].contains(&c))
+            .unwrap();
+    }
+    (qoute, line)
 }

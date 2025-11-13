@@ -56,7 +56,7 @@ Links are defined in FXG using the syntax <><#link Human-readable text></>. Imag
 
 === Horizontal rules ===
 
-A horizontal rule is written using 5 or more hypens consecutively on a newline. If there is any text after the hypens, it is parsed as normal text. Horizontal rules can be escaped by prepending a space to the line containing the rule.
+A horizontal rule is written using 3 or more hypens consecutively on a newline. If there is any text after the hypens, it is parsed as normal text. Horizontal rules can be escaped by prepending a space to the line containing the rule.
 
 ==== Examples ====
 
@@ -79,12 +79,25 @@ FXG uses e-mail style blockqouting. Any line that begins with <>></> will be in 
 
 > hello :))
 
+> multiline
+> blockqoute
+
 > 2 + 2 = 5
 - Radiohead, 2003
 
 > This is a nested blockqoute:
 > > Someone said this once
+> indent back out
 
+> you can nest
+> > as many
+> > > times
+> > > > as you want
+
+> > > > also the
+> > > other way
+> > around
+> yea
 
 === Tables ===
 
