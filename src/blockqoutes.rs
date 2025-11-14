@@ -23,7 +23,6 @@ fn parse_blockqoute_internal<T>(
 where
     T: Read,
 {
-    dbg!();
     let mut qoute = line;
     let mut line = String::new();
     while let Ok(len) = reader.read_line(&mut line) {
@@ -38,7 +37,6 @@ where
         line.clear();
     }
     let mut qoute_data: Vec<QouteData> = vec![];
-    dbg!(&qoute);
     for line in qoute.lines() {
         let qoutes_idx = line
             .find(|c: char| c != '>' && c != '-' && !c.is_whitespace())
@@ -64,17 +62,16 @@ where
                 output.write_closing_tag("blockqoute");
                 output.write_tag("figcaption", data.2);
                 output.write_closing_tag("figure");
+                continue;
             }
             let delta = data.0 - current_depth;
             if delta < 0 {
-                eprintln!("outdent by {delta}");
                 for _ in 0..delta.abs() {
                     output.write_closing_tag("blockqoute");
                     output.write_closing_tag("figure");
                 }
                 current_depth = data.0;
             } else {
-                eprintln!("indent by {delta}");
                 for _ in 0..delta {
                     output.write_opening_tag("figure");
                     output.write_opening_tag("blockqoute");

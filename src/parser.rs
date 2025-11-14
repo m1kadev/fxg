@@ -5,9 +5,7 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-use phf_macros::phf_map;
-
-use crate::{UNICODE_PLACEHOLDERS, blockqoutes::parse_blockqoute, escape};
+use crate::{UNICODE_PLACEHOLDERS, blockqoutes::parse_blockqoute, escape, extensions::HtmlWriting};
 
 pub fn parse<T>(reader: &mut BufReader<T>) -> String
 where
@@ -46,6 +44,54 @@ where
             let (blockqoute, _) = parse_blockqoute(reader, lnbuf.clone()); // ? elegance
             output.push_str(&blockqoute);
             last_line_was_title = false;
+        } else if line.starts_with('<')
+            && line.ends_with('>')
+            && line[1..line.len() - 1].chars().all(char::is_alphabetic)
+        {
+            let lang = &line[1..line.len() - 1];
+            if lang.is_empty() {
+                output.write_opening_tag("pre");
+                output.write_opening_tag("code");
+            } else {
+                output.write_opening_tag("pre");
+                output.write_opening_tag_class("code", &format!("language-{lang}"));
+            }
+            lnbuf.clear();
+            while let Ok(length) = reader.read_line(&mut lnbuf) {
+                if length == 0 {
+                    break;
+                }
+                if &lnbuf[lnbuf.len() - length..lnbuf.len() - 1] == "</>" {
+                    break;
+                }
+            }
+            dbg!(&lnbuf);
+
+            let least_indent = lnbuf
+                .lines()
+                .rev()
+                .skip(1)
+                .map(|line| line.find(|c: char| !c.is_whitespace()))
+                .filter(|x| x.is_some())
+                .map(|x| x.unwrap())
+                .min()
+                .unwrap();
+
+            dbg!(least_indent);
+            let mut lines = lnbuf.lines().peekable();
+            while let Some(line) = lines.next() {
+                if let None = lines.peek() {
+                    break;
+                }
+                if line.is_empty() {
+                    output.push('\n');
+                } else {
+                    output.push_str(&line[least_indent..]);
+                    output.push('\n');
+                }
+            }
+            output.write_closing_tag("code");
+            output.write_closing_tag("pre");
         } else {
             output.push_str(&parse_text(line));
             output.push(' ');
