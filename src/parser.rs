@@ -2,7 +2,7 @@
 
 use std::{
     collections::HashSet,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Read},
 };
 
 use crate::{UNICODE_PLACEHOLDERS, blockqoutes::parse_blockqoute, escape, extensions::HtmlWriting};
@@ -48,50 +48,22 @@ where
             && line.ends_with('>')
             && line[1..line.len() - 1].chars().all(char::is_alphabetic)
         {
-            let lang = &line[1..line.len() - 1];
-            if lang.is_empty() {
-                output.write_opening_tag("pre");
-                output.write_opening_tag("code");
-            } else {
-                output.write_opening_tag("pre");
-                output.write_opening_tag_class("code", &format!("language-{lang}"));
-            }
-            lnbuf.clear();
+            parse_codeblock(reader, &mut output, lnbuf.clone(), line);
+        } else if lnbuf.starts_with('|') && line.ends_with('|') {
+            let mut table = String::new();
             while let Ok(length) = reader.read_line(&mut lnbuf) {
                 if length == 0 {
                     break;
                 }
-                if &lnbuf[lnbuf.len() - length..lnbuf.len() - 1] == "</>" {
-                    break;
-                }
-            }
-            dbg!(&lnbuf);
-
-            let least_indent = lnbuf
-                .lines()
-                .rev()
-                .skip(1)
-                .map(|line| line.find(|c: char| !c.is_whitespace()))
-                .filter(|x| x.is_some())
-                .map(|x| x.unwrap())
-                .min()
-                .unwrap();
-
-            dbg!(least_indent);
-            let mut lines = lnbuf.lines().peekable();
-            while let Some(line) = lines.next() {
-                if let None = lines.peek() {
-                    break;
-                }
-                if line.is_empty() {
-                    output.push('\n');
+                let line = &lnbuf[lnbuf.len() - length..lnbuf.len()].trim();
+                if line.starts_with('|') && line.ends_with('|') {
+                    table.push_str(&lnbuf);
                 } else {
-                    output.push_str(&line[least_indent..]);
-                    output.push('\n');
+                    break;
                 }
+                lnbuf.clear();
             }
-            output.write_closing_tag("code");
-            output.write_closing_tag("pre");
+            output.push_str(&parse_table(&table));
         } else {
             output.push_str(&parse_text(line));
             output.push(' ');
@@ -115,6 +87,54 @@ where
     }
 
     output
+}
+
+fn parse_codeblock<T>(reader: &mut BufReader<T>, output: &mut String, mut lnbuf: String, line: &str)
+where
+    T: Read,
+{
+    let lang = &line[1..line.len() - 1];
+    if lang.is_empty() {
+        output.write_opening_tag("pre");
+        output.write_opening_tag("code");
+    } else {
+        output.write_opening_tag("pre");
+        output.write_opening_tag_class("code", &format!("language-{lang}"));
+    }
+    lnbuf.clear();
+    while let Ok(length) = reader.read_line(&mut lnbuf) {
+        if length == 0 {
+            break;
+        }
+        if &lnbuf[lnbuf.len() - length..lnbuf.len() - 1] == "</>" {
+            break;
+        }
+    }
+
+    let least_indent = lnbuf
+        .lines()
+        .rev()
+        .skip(1)
+        .map(|line| line.find(|c: char| !c.is_whitespace()))
+        .filter(|x| x.is_some())
+        .map(|x| x.unwrap())
+        .min()
+        .unwrap();
+
+    let mut lines = lnbuf.lines().peekable();
+    while let Some(line) = lines.next() {
+        if let None = lines.peek() {
+            break;
+        }
+        if line.is_empty() {
+            output.push('\n');
+        } else {
+            output.push_str(&line[least_indent..]);
+            output.push('\n');
+        }
+    }
+    output.write_closing_tag("code");
+    output.write_closing_tag("pre");
 }
 
 fn parse_markup(input: &str, markup: &'static str, html_tag: &'static str) -> String {
@@ -325,5 +345,50 @@ fn parse_code(line_dat: &str) -> String {
     output.push_str("/code");
     output.push_str(escape!(">"));
     output.push_str(&parse_text(tag_remainder));
+    output
+}
+
+fn parse_table(table: &str) -> String {
+    let mut output = String::new();
+    output.write_opening_tag("table");
+    let mut is_header = true;
+    let mut last_was_header = true;
+    let mut rowbuf = String::new();
+    for line in table.lines() {
+        output.write_opening_tag("tr");
+        for table_entry in line.split("|") {
+            if table_entry.is_empty() {
+                continue;
+            }
+            if table_entry.trim().chars().all(|c| c == '-') {
+                dbg!(table_entry);
+                is_header = false;
+            }
+            if is_header {
+                rowbuf.write_tag("th", table_entry);
+                dbg!(&rowbuf);
+            } else {
+                rowbuf.write_tag("td", table_entry);
+            }
+        }
+        if !is_header && last_was_header {
+            last_was_header = false;
+            rowbuf.clear();
+            continue;
+        } else {
+            if is_header {
+                last_was_header = true;
+            }
+            output.push_str(&rowbuf);
+        }
+        output.write_closing_tag("tr");
+        rowbuf.clear();
+    }
+
+    if is_header {
+        output = output.replace("th", "td"); // all is data
+    }
+    output.write_closing_tag("table");
+
     output
 }
