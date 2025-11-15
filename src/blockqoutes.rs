@@ -1,10 +1,6 @@
-use std::{
-    env::current_exe,
-    fs::read,
-    io::{BufRead, BufReader, Read},
-};
+use std::io::{BufRead, BufReader, Read};
 
-use crate::{escape, extensions::HtmlWriting, parser::parse_text};
+use crate::{extensions::HtmlWriting, parser::parse_text};
 
 struct QouteData<'lines>(isize, bool, &'lines str);
 

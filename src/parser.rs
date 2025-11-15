@@ -360,18 +360,18 @@ fn parse_table(table: &str) -> String {
             if table_entry.is_empty() {
                 continue;
             }
-            if table_entry.trim().chars().all(|c| c == '-') {
-                dbg!(table_entry);
+            let entry_trimmed = table_entry.trim();
+            if entry_trimmed.chars().all(|c| c == '-') && !entry_trimmed.is_empty() {
                 is_header = false;
             }
             if is_header {
                 rowbuf.write_tag("th", table_entry);
-                dbg!(&rowbuf);
             } else {
                 rowbuf.write_tag("td", table_entry);
             }
         }
         if !is_header && last_was_header {
+            dbg!(&rowbuf);
             last_was_header = false;
             rowbuf.clear();
             continue;
