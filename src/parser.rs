@@ -7,6 +7,8 @@ use std::{
 
 use crate::{UNICODE_PLACEHOLDERS, blockqoutes::parse_blockqoute, escape, extensions::HtmlWriting};
 
+const NUMERICS: &[char] = &['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
 pub fn parse<T>(reader: &mut BufReader<T>) -> String
 where
     T: std::io::Read,
@@ -30,6 +32,11 @@ where
             output.push_str("br/");
             output.push_str(escape!(">"));
         } else if lnbuf.starts_with('-') {
+            if &lnbuf[1..2] == " " {
+                output.push_str(&parse_ul(reader, lnbuf.clone()));
+                lnbuf.clear();
+                continue;
+            }
             let chars = line.chars().collect::<HashSet<char>>();
             if chars.len() == 1 && line.len() >= 3 {
                 output.push_str(escape!("<"));
@@ -64,6 +71,14 @@ where
                 lnbuf.clear();
             }
             output.push_str(&parse_table(&table));
+        } else if line.starts_with(NUMERICS) {
+            if let Some(nnumber) = line.find(|c| !NUMERICS.contains(&c)) {
+                if &line[nnumber..nnumber + 1] == "." {
+                    output.push_str(&parse_ol(reader, lnbuf.clone()));
+                }
+            } else {
+                output.push_str(&parse_text(line));
+            }
         } else {
             output.push_str(&parse_text(line));
             output.push(' ');
@@ -95,11 +110,11 @@ where
 {
     let lang = &line[1..line.len() - 1];
     if lang.is_empty() {
-        output.write_opening_tag("pre");
-        output.write_opening_tag("code");
+        output.write_opening_tag("pre", &[]);
+        output.write_opening_tag("code", &[]);
     } else {
-        output.write_opening_tag("pre");
-        output.write_opening_tag_class("code", &format!("language-{lang}"));
+        output.write_opening_tag("pre", &[]);
+        output.write_opening_tag("code", &[("class", &format!("language-{lang}"))]);
     }
     lnbuf.clear();
     while let Ok(length) = reader.read_line(&mut lnbuf) {
@@ -350,12 +365,12 @@ fn parse_code(line_dat: &str) -> String {
 
 fn parse_table(table: &str) -> String {
     let mut output = String::new();
-    output.write_opening_tag("table");
+    output.write_opening_tag("table", &[]);
     let mut is_header = true;
     let mut last_was_header = true;
     let mut rowbuf = String::new();
     for line in table.lines() {
-        output.write_opening_tag("tr");
+        output.write_opening_tag("tr", &[]);
         for table_entry in line.split("|") {
             if table_entry.is_empty() {
                 continue;
@@ -371,7 +386,6 @@ fn parse_table(table: &str) -> String {
             }
         }
         if !is_header && last_was_header {
-            dbg!(&rowbuf);
             last_was_header = false;
             rowbuf.clear();
             continue;
@@ -389,6 +403,92 @@ fn parse_table(table: &str) -> String {
         output = output.replace("th", "td"); // all is data
     }
     output.write_closing_tag("table");
+
+    output
+}
+
+fn parse_ul<T>(reader: &mut BufReader<T>, mut lnbuf: String) -> String
+where
+    T: Read,
+{
+    let mut output = String::new();
+
+    while let Ok(length) = reader.read_line(&mut lnbuf) {
+        let line = &lnbuf[lnbuf.len() - length..];
+
+        if !line.starts_with("- ") || length == 0 {
+            break;
+        }
+    }
+    let list = lnbuf.trim();
+    output.write_opening_tag("ul", &[]);
+    for item in list.lines() {
+        let contents = &item[2..];
+        let checkbox = &contents[0..3];
+        match checkbox {
+            "[ ]" => {
+                output.write_opening_tag("li", &[]);
+                output.write_opening_tag("input", &[("type", "checkbox")]);
+                output.push_str(&contents[3..]);
+                output.write_closing_tag("input");
+                output.write_closing_tag("li");
+            }
+            "[-]" => {
+                output.write_opening_tag("li", &[]);
+                output.write_opening_tag(
+                    "input",
+                    &[("type", "checkbox"), ("class", "fxg-indeterminate")],
+                );
+                output.push_str(&contents[3..]);
+                output.write_closing_tag("input");
+                output.write_closing_tag("li");
+            }
+            "[x]" => {
+                output.write_opening_tag("li", &[]);
+                output.write_opening_tag("input", &[("type", "checkbox"), ("checked", "checked")]);
+                output.push_str(&contents[3..]);
+                output.write_closing_tag("input");
+                output.write_closing_tag("li");
+            }
+            _ => output.write_tag("li", contents),
+        }
+    }
+    output.write_closing_tag("ul");
+    output
+}
+
+fn parse_ol<T>(reader: &mut BufReader<T>, mut buffer: String) -> String
+where
+    T: Read,
+{
+    let mut output = String::new();
+    while let Ok(length) = reader.read_line(&mut buffer) {
+        if length == 0 {
+            break;
+        }
+        let line = &buffer[buffer.len() - length..];
+        if !line.starts_with(NUMERICS) {
+            buffer.replace_range(buffer.len() - length.., "");
+            break;
+        }
+        if let Some(nnumber) = line.find(|c| !NUMERICS.contains(&c)) {
+            if !(&line[nnumber..nnumber + 1] == ".") {
+                break;
+            }
+        }
+    }
+
+    let list_items = buffer
+        .lines()
+        .map(|line| &line[line.find(|c| !NUMERICS.contains(&c)).unwrap() + 1..])
+        .map(|line| line.trim());
+    //    .collect::<Vec<_>>();
+
+    output.write_opening_tag("ol", &[]);
+    for item in list_items {
+        output.write_tag("li", item);
+    }
+    output.write_closing_tag("ol");
 
     output
 }

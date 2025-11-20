@@ -1,28 +1,26 @@
 use crate::escape;
 
+type TagData<'a> = &'a [(&'a str, &'a str)];
+
 pub trait HtmlWriting {
     fn write_tag(&mut self, tag: &str, contents: &str);
-    fn write_opening_tag(&mut self, tag: &str);
+    fn write_opening_tag(&mut self, tag: &str, tag_data: TagData);
     fn write_closing_tag(&mut self, tag: &str);
-    fn write_opening_tag_class(&mut self, tag: &str, class: &str);
 }
 
 impl HtmlWriting for String {
     #[inline(always)]
-    fn write_opening_tag(&mut self, tag: &str) {
+    fn write_opening_tag(&mut self, tag: &str, tag_data: TagData) {
         self.push_str(escape!("<"));
         self.push_str(tag);
-        self.push_str(escape!(">"));
-    }
-
-    #[inline(always)]
-    fn write_opening_tag_class(&mut self, tag: &str, class: &str) {
-        self.push_str(escape!("<"));
-        self.push_str(tag);
-        self.push_str(" class=\"");
-        self.push_str(class);
-        self.push_str("\"");
-
+        for data in tag_data {
+            self.push(' ');
+            self.push_str(data.0);
+            self.push('=');
+            self.push_str(escape!("\""));
+            self.push_str(data.1);
+            self.push_str(escape!("\""));
+        }
         self.push_str(escape!(">"));
     }
 
@@ -36,7 +34,7 @@ impl HtmlWriting for String {
 
     #[inline(always)]
     fn write_tag(&mut self, tag: &str, contents: &str) {
-        self.write_opening_tag(tag);
+        self.write_opening_tag(tag, &[]);
         self.push_str(contents);
         self.write_closing_tag(tag);
     }

@@ -141,3 +141,25 @@ After this, the contents of the table are written. Using the same syntax as the 
 | --------------------- | ------------- |
 | 0.0231                |  2            |
 
+=== Lists ===
+
+FXG supports 3 types of lists: ordered lists, unordered lists, and checklists. Unordered lists are created by having a hyphen, space, and a list item on one line. List items must be continuous. Otherwise a second list must be rendered.
+
+==== Examples ====
+
+TODO:
+
+- Item 1
+- Item 2
+- Item 3
+
+- Item 4
+- Item 5
+
+1. bal
+2. di
+3. da
+
+- [x] bal
+- [-] di
+- [ ] da

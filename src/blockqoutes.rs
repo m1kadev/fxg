@@ -4,18 +4,14 @@ use crate::{extensions::HtmlWriting, parser::parse_text};
 
 struct QouteData<'lines>(isize, bool, &'lines str);
 
-pub fn parse_blockqoute<T>(reader: &mut BufReader<T>, mut line: String) -> (String, String)
+pub fn parse_blockqoute<T>(reader: &mut BufReader<T>, line: String) -> (String, String)
 where
     T: Read,
 {
-    parse_blockqoute_internal(reader, line, 1)
+    parse_blockqoute_internal(reader, line)
 }
 
-fn parse_blockqoute_internal<T>(
-    reader: &mut BufReader<T>,
-    line: String,
-    depth: usize,
-) -> (String, String)
+fn parse_blockqoute_internal<T>(reader: &mut BufReader<T>, line: String) -> (String, String)
 where
     T: Read,
 {
@@ -69,14 +65,14 @@ where
                 current_depth = data.0;
             } else {
                 for _ in 0..delta {
-                    output.write_opening_tag("figure");
-                    output.write_opening_tag("blockqoute");
+                    output.write_opening_tag("figure", &[]);
+                    output.write_opening_tag("blockqoute", &[]);
                 }
                 current_depth = data.0;
             }
         }
         output.push_str(&parse_text(data.2));
-        output.write_opening_tag("br");
+        output.write_opening_tag("br", &[]);
     }
 
     for _ in 0..current_depth {
