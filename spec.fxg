@@ -149,17 +149,8 @@ FXG supports 3 types of lists: ordered lists, unordered lists, and checklists. U
 
 TODO:
 
-- Item 1
-- Item 2
-- Item 3
-
-- Item 4
-- Item 5
-
-1. bal
-2. di
-3. da
-
-- [x] bal
-- [-] di
-- [ ] da
+- item 1
+- - nested item 1
+- - nested item 2
+- item 2
+- - - - unexpected deep nesting

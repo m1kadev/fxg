@@ -2,7 +2,9 @@
 
 use std::{
     collections::HashSet,
+    env::current_exe,
     io::{BufRead, BufReader, Read},
+    ops::Div,
 };
 
 use crate::{UNICODE_PLACEHOLDERS, blockqoutes::parse_blockqoute, escape, extensions::HtmlWriting};
@@ -15,6 +17,8 @@ where
 {
     let mut output = String::new();
     let mut lnbuf = String::new();
+
+    output.write_opening_tag("div", &[("class", "fxg-content")]);
 
     let mut last_line_was_title = false;
 
@@ -86,6 +90,8 @@ where
         }
         lnbuf.clear();
     }
+
+    output.write_closing_tag("div");
 
     output = output
         .replace("&", "&amp;")
@@ -420,40 +426,33 @@ where
             break;
         }
     }
-    let list = lnbuf.trim();
-    output.write_opening_tag("ul", &[]);
-    for item in list.lines() {
-        let contents = &item[2..];
-        let checkbox = &contents[0..3];
-        match checkbox {
-            "[ ]" => {
-                output.write_opening_tag("li", &[]);
-                output.write_opening_tag("input", &[("type", "checkbox")]);
-                output.push_str(&contents[3..]);
-                output.write_closing_tag("input");
-                output.write_closing_tag("li");
+    let list = lnbuf.trim().lines();
+    let mut current_depth = 0;
+    for item in list {
+        let pre = item.find(|c| !&['-', ' '].contains(&c)).unwrap();
+        let depth = item[..pre].chars().filter(|c| *c == '-').count();
+        if current_depth < depth {
+            let delta = depth - current_depth;
+            for _ in 0..delta {
+                // w3c fight me
+                //output.write_opening_tag("li", &[]);
+                output.write_opening_tag("ul", &[]);
             }
-            "[-]" => {
-                output.write_opening_tag("li", &[]);
-                output.write_opening_tag(
-                    "input",
-                    &[("type", "checkbox"), ("class", "fxg-indeterminate")],
-                );
-                output.push_str(&contents[3..]);
-                output.write_closing_tag("input");
-                output.write_closing_tag("li");
+            current_depth = depth;
+        } else if current_depth > depth {
+            let delta = current_depth - depth;
+            for _ in 0..delta {
+                output.write_closing_tag("ul");
+                //output.write_closing_tag("li");
             }
-            "[x]" => {
-                output.write_opening_tag("li", &[]);
-                output.write_opening_tag("input", &[("type", "checkbox"), ("checked", "checked")]);
-                output.push_str(&contents[3..]);
-                output.write_closing_tag("input");
-                output.write_closing_tag("li");
-            }
-            _ => output.write_tag("li", contents),
+            current_depth = depth;
         }
+        output.write_tag("li", &parse_text(&item[pre..]));
     }
-    output.write_closing_tag("ul");
+    for _ in 0..current_depth {
+        output.write_closing_tag("ul");
+    }
+
     output
 }
 
@@ -462,33 +461,6 @@ where
     T: Read,
 {
     let mut output = String::new();
-    while let Ok(length) = reader.read_line(&mut buffer) {
-        if length == 0 {
-            break;
-        }
-        let line = &buffer[buffer.len() - length..];
-        if !line.starts_with(NUMERICS) {
-            buffer.replace_range(buffer.len() - length.., "");
-            break;
-        }
-        if let Some(nnumber) = line.find(|c| !NUMERICS.contains(&c)) {
-            if !(&line[nnumber..nnumber + 1] == ".") {
-                break;
-            }
-        }
-    }
-
-    let list_items = buffer
-        .lines()
-        .map(|line| &line[line.find(|c| !NUMERICS.contains(&c)).unwrap() + 1..])
-        .map(|line| line.trim());
-    //    .collect::<Vec<_>>();
-
-    output.write_opening_tag("ol", &[]);
-    for item in list_items {
-        output.write_tag("li", item);
-    }
-    output.write_closing_tag("ol");
 
     output
 }
