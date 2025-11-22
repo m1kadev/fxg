@@ -1,0 +1,10 @@
+<style>
+    .fxg-clitem {
+        pointer-events: none;
+    }
+</style>
+
+<script>
+    const fxgLoad = (e) => { for (const cb of document.getElementsByClassName("fxg-indeterminate")) { console.log(cb); cb.indeterminate = true; } }
+    addEventListener("load", fxgLoad);
+</script>

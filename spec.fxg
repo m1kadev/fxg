@@ -154,3 +154,8 @@ TODO:
 - - nested item 2
 - item 2
 - - - - unexpected deep nesting
+
+- [ ] empty
+- [-] half-empty
+- - [x] full
+- - [ ] empty

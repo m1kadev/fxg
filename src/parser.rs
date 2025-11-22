@@ -386,9 +386,9 @@ fn parse_table(table: &str) -> String {
                 is_header = false;
             }
             if is_header {
-                rowbuf.write_tag("th", table_entry);
+                rowbuf.write_tag("th", table_entry, &[]);
             } else {
-                rowbuf.write_tag("td", table_entry);
+                rowbuf.write_tag("td", table_entry, &[]);
             }
         }
         if !is_header && last_was_header {
@@ -447,7 +447,7 @@ where
             }
             current_depth = depth;
         }
-        output.write_tag("li", &parse_text(&item[pre..]));
+        output.write_tag("li", &parse_li(&item[pre..]), &[]);
     }
     for _ in 0..current_depth {
         output.write_closing_tag("ul");
@@ -456,6 +456,7 @@ where
     output
 }
 
+// TODO: allow different ol "indexers": numbers, upper and lowercase roman numerals, and upper and lowercase letters
 fn parse_ol<T>(reader: &mut BufReader<T>, mut buffer: String) -> String
 where
     T: Read,
@@ -463,4 +464,46 @@ where
     let mut output = String::new();
 
     output
+}
+
+fn parse_li(rli: &str) -> String {
+    let li = rli.trim();
+    let prefix = &li[..3];
+    match prefix {
+        "[ ]" => {
+            let mut output = String::new();
+            output.write_tag(
+                "input",
+                &parse_text(&li[3..]),
+                &[("type", "checkbox"), ("class", "fxg-clitem")],
+            );
+            output
+        }
+        "[-]" => {
+            let mut output = String::new();
+            output.write_tag(
+                "input",
+                &parse_text(&li[3..]),
+                &[
+                    ("type", "checkbox"),
+                    ("class", "fxg-indeterminate fxg-clitem"),
+                ],
+            );
+            output
+        }
+        "[x]" => {
+            let mut output = String::new();
+            output.write_tag(
+                "input",
+                &parse_text(&li[3..]),
+                &[
+                    ("type", "checkbox"),
+                    ("class", "fxg-indeterminate fxg-clitem"),
+                    ("checked", ""),
+                ],
+            );
+            output
+        }
+        _ => parse_text(li),
+    }
 }

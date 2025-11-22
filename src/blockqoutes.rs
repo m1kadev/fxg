@@ -52,7 +52,7 @@ where
         if data.0 != current_depth {
             if data.1 {
                 output.write_closing_tag("blockqoute");
-                output.write_tag("figcaption", data.2);
+                output.write_tag("figcaption", data.2, &[]);
                 output.write_closing_tag("figure");
                 continue;
             }
