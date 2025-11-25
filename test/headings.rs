@@ -11,4 +11,8 @@ parser_tests! {
     [excess_equals_signs] { "======== Heading 8 ========" ->  "======== Heading 8 ========" };
     [fully_unclosed_header] { "== Heading 2" -> "== Heading 2" };
     [partially_unclosed_header] { "== Heading 2 =" -> "== Heading 2 =" };
+
+    [empty_header] { "= =" -> "<h1></h1>" };
+    [empty_header_3] { "=== ===" -> "<h3></h3>" };
+
 }

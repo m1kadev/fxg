@@ -1,6 +1,7 @@
 // TODO: macro for repeated push_str calls
 
 use std::{
+    arch::naked_asm,
     collections::HashSet,
     env::current_exe,
     io::{BufRead, BufReader, Read},
@@ -11,6 +12,54 @@ use crate::{UNICODE_PLACEHOLDERS, blockqoutes::parse_blockqoute, escape, extensi
 
 const NUMERICS: &[char] = &['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
+const LOWERCASE_LETTERS: &[char] = &[
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
+    't', 'u', 'v', 'w', 'x', 'y', 'z',
+];
+const UPPERCASE_LETTERS: &[char] = &[
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+    'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+];
+
+const ROMAN_NUMERALS_UPPERCASE: &[char] = &['I', 'V', 'X', 'L', 'D', 'M'];
+const ROMAN_NUMERALS_LOWERCASE: &[char] = &['i', 'v', 'x', 'l', 'd', 'm'];
+
+#[derive(Debug)]
+enum OrderedListMarker {
+    Numerical,
+    LowercaseLetters,
+    UppercaseLetters,
+    LowercaseNumerals,
+    UppercaseNumerals,
+}
+
+impl OrderedListMarker {
+    fn charset(&self) -> &[char] {
+        match self {
+            Self::LowercaseLetters => LOWERCASE_LETTERS,
+            Self::LowercaseNumerals => ROMAN_NUMERALS_LOWERCASE,
+            Self::Numerical => NUMERICS,
+            Self::UppercaseLetters => UPPERCASE_LETTERS,
+            Self::UppercaseNumerals => ROMAN_NUMERALS_UPPERCASE,
+        }
+    }
+
+    fn html_type(&self) -> &str {
+        match self {
+            Self::LowercaseLetters => "a",
+            Self::Numerical => "1",
+            Self::UppercaseLetters => "A",
+            Self::LowercaseNumerals => "i",
+            Self::UppercaseNumerals => "I",
+        }
+    }
+}
+
+#[inline(always)]
+fn string_consists_of(input: &str, set: &[char]) -> bool {
+    input.chars().all(|c| set.contains(&c))
+}
+
 pub fn parse<T>(reader: &mut BufReader<T>) -> String
 where
     T: std::io::Read,
@@ -18,7 +67,7 @@ where
     let mut output = String::new();
     let mut lnbuf = String::new();
 
-    output.write_opening_tag("div", &[("class", "fxg-content")]);
+    // output.write_opening_tag("div", &[("class", "fxg-content")]);
 
     let mut last_line_was_title = false;
 
@@ -75,23 +124,50 @@ where
                 lnbuf.clear();
             }
             output.push_str(&parse_table(&table));
-        } else if line.starts_with(NUMERICS) {
-            if let Some(nnumber) = line.find(|c| !NUMERICS.contains(&c)) {
-                if &line[nnumber..nnumber + 1] == "." {
-                    output.push_str(&parse_ol(reader, lnbuf.clone()));
-                }
-            } else {
-                output.push_str(&parse_text(line));
-            }
         } else {
-            output.push_str(&parse_text(line));
-            output.push(' ');
-            last_line_was_title = false;
+            if let Some(pos) = lnbuf.find('.') {
+                let marker = &lnbuf[..pos];
+                if string_consists_of(marker, NUMERICS) {
+                    output.push_str(&parse_ol(
+                        reader,
+                        lnbuf.clone(),
+                        OrderedListMarker::Numerical,
+                    ));
+                } else if string_consists_of(marker, ROMAN_NUMERALS_LOWERCASE) {
+                    output.push_str(&parse_ol(
+                        reader,
+                        lnbuf.clone(),
+                        OrderedListMarker::LowercaseNumerals,
+                    ));
+                } else if string_consists_of(marker, ROMAN_NUMERALS_UPPERCASE) {
+                    output.push_str(&parse_ol(
+                        reader,
+                        lnbuf.clone(),
+                        OrderedListMarker::UppercaseNumerals,
+                    ));
+                } else if string_consists_of(marker, LOWERCASE_LETTERS) {
+                    output.push_str(&parse_ol(
+                        reader,
+                        lnbuf.clone(),
+                        OrderedListMarker::LowercaseLetters,
+                    ));
+                } else if string_consists_of(marker, UPPERCASE_LETTERS) {
+                    output.push_str(&parse_ol(
+                        reader,
+                        lnbuf.clone(),
+                        OrderedListMarker::UppercaseLetters,
+                    ));
+                } else {
+                    output.push_str(&parse_text(line));
+                    output.push(' ');
+                    last_line_was_title = false;
+                }
+            }
         }
         lnbuf.clear();
     }
 
-    output.write_closing_tag("div");
+    // output.write_closing_tag("div");
 
     output = output
         .replace("&", "&amp;")
@@ -457,11 +533,36 @@ where
 }
 
 // TODO: allow different ol "indexers": numbers, upper and lowercase roman numerals, and upper and lowercase letters
-fn parse_ol<T>(reader: &mut BufReader<T>, mut buffer: String) -> String
+fn parse_ol<T>(reader: &mut BufReader<T>, mut buffer: String, marker: OrderedListMarker) -> String
 where
     T: Read,
 {
     let mut output = String::new();
+    let mut items = vec![];
+    items.push(buffer.split_once('.').unwrap().1.to_string());
+    buffer.clear();
+    while let Ok(read) = reader.read_line(&mut buffer) {
+        if read == 0 {
+            break;
+        }
+        if let Some((indexer, item)) = buffer.split_once('.') {
+            if !string_consists_of(indexer, marker.charset()) {
+                break;
+            } else {
+                items.push(item.to_string());
+            }
+        } else {
+            break;
+        }
+        buffer.clear();
+    }
+    output.write_opening_tag("ol", &[("type", marker.html_type())]);
+    let html_output = items.iter().map(|x| x.trim().to_string());
+    for item in html_output {
+        output.write_tag("li", &item, &[]);
+    }
+    output.write_closing_tag("ol");
+    dbg!(items);
 
     output
 }
