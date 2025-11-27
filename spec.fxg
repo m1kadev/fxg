@@ -160,9 +160,6 @@ TODO:
 - - [x] full
 - - [ ] empty
 
-1. item 1
-2. item 2
-3. item 3
-
-I. item 1
-II. item 2
+1. item
+2. 1. nested item
+2. 1. another nested item

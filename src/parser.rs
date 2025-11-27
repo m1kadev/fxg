@@ -1,11 +1,9 @@
 // TODO: macro for repeated push_str calls
 
 use std::{
-    arch::naked_asm,
     collections::HashSet,
-    env::current_exe,
     io::{BufRead, BufReader, Read},
-    ops::Div,
+    pin,
 };
 
 use crate::{UNICODE_PLACEHOLDERS, blockqoutes::parse_blockqoute, escape, extensions::HtmlWriting};
@@ -24,7 +22,7 @@ const UPPERCASE_LETTERS: &[char] = &[
 const ROMAN_NUMERALS_UPPERCASE: &[char] = &['I', 'V', 'X', 'L', 'D', 'M'];
 const ROMAN_NUMERALS_LOWERCASE: &[char] = &['i', 'v', 'x', 'l', 'd', 'm'];
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum OrderedListMarker {
     Numerical,
     LowercaseLetters,
@@ -132,30 +130,35 @@ where
                         reader,
                         lnbuf.clone(),
                         OrderedListMarker::Numerical,
+                        1,
                     ));
                 } else if string_consists_of(marker, ROMAN_NUMERALS_LOWERCASE) {
                     output.push_str(&parse_ol(
                         reader,
                         lnbuf.clone(),
                         OrderedListMarker::LowercaseNumerals,
+                        1,
                     ));
                 } else if string_consists_of(marker, ROMAN_NUMERALS_UPPERCASE) {
                     output.push_str(&parse_ol(
                         reader,
                         lnbuf.clone(),
                         OrderedListMarker::UppercaseNumerals,
+                        1,
                     ));
                 } else if string_consists_of(marker, LOWERCASE_LETTERS) {
                     output.push_str(&parse_ol(
                         reader,
                         lnbuf.clone(),
                         OrderedListMarker::LowercaseLetters,
+                        1,
                     ));
                 } else if string_consists_of(marker, UPPERCASE_LETTERS) {
                     output.push_str(&parse_ol(
                         reader,
                         lnbuf.clone(),
                         OrderedListMarker::UppercaseLetters,
+                        1,
                     ));
                 } else {
                     output.push_str(&parse_text(line));
@@ -532,23 +535,46 @@ where
     output
 }
 
-// TODO: allow different ol "indexers": numbers, upper and lowercase roman numerals, and upper and lowercase letters
-fn parse_ol<T>(reader: &mut BufReader<T>, mut buffer: String, marker: OrderedListMarker) -> String
+// ! REWRITE: remove code for other indexers, only allow numbered lists
+fn parse_ol<T>(
+    reader: &mut BufReader<T>,
+    mut buffer: String,
+    marker: OrderedListMarker,
+    depth: usize,
+) -> String
 where
     T: Read,
 {
     let mut output = String::new();
     let mut items = vec![];
-    items.push(buffer.split_once('.').unwrap().1.to_string());
+    items.push(buffer.splitn(depth + 1, ".").last().unwrap().to_string());
     buffer.clear();
     while let Ok(read) = reader.read_line(&mut buffer) {
         if read == 0 {
             break;
         }
-        if let Some((indexer, item)) = buffer.split_once('.') {
+        // if let Some((indexer, item)) = buffer.split_once('.') {
+        let mut splitn = buffer.splitn(depth + 1, '.').skip(depth - 1);
+        let pindexer = splitn.next();
+        let ptext = splitn.next();
+        if let (Some(indexer), Some(item)) = (pindexer, ptext) {
             if !string_consists_of(indexer, marker.charset()) {
                 break;
             } else {
+                if let Some((potential_indexer, _)) = item.split_once('.') {
+                    let indexer = potential_indexer.trim();
+                    if string_consists_of(indexer, NUMERICS) {
+                        items.push(parse_ol(reader, buffer.clone(), marker, depth + 1));
+                    } else if string_consists_of(indexer, ROMAN_NUMERALS_UPPERCASE) {
+                        items.push(parse_ol(reader, buffer.clone(), marker, depth + 1));
+                    } else if string_consists_of(indexer, ROMAN_NUMERALS_LOWERCASE) {
+                        items.push(parse_ol(reader, buffer.clone(), marker, depth + 1));
+                    } else if string_consists_of(indexer, LOWERCASE_LETTERS) {
+                        items.push(parse_ol(reader, buffer.clone(), marker, depth + 1));
+                    } else if string_consists_of(indexer, UPPERCASE_LETTERS) {
+                        items.push(parse_ol(reader, buffer.clone(), marker, depth + 1));
+                    }
+                }
                 items.push(item.to_string());
             }
         } else {
@@ -562,7 +588,6 @@ where
         output.write_tag("li", &item, &[]);
     }
     output.write_closing_tag("ol");
-    dbg!(items);
 
     output
 }
