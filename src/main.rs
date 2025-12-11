@@ -1,108 +1,111 @@
-use std::{env::current_dir, fs::File, io::Write, path::PathBuf, process::exit};
+use std::{
+    collections::HashMap, env::args, fmt::Display, fs::File, io::BufReader, path::PathBuf,
+    process::exit,
+};
 
-use clap::{Parser, Subcommand};
+use owo_colors::OwoColorize;
+use phf_macros::phf_map;
 
-mod compiler;
-mod error;
-mod project;
+mod blockqoutes;
+mod extensions;
+mod parser;
 
-use colored::Colorize;
-use compiler::build;
-use error::Error;
+#[cfg(test)]
+#[path = "../test/mod.rs"]
+mod test;
 
-use crate::compiler::DocumentHeader;
-use crate::project::{Project, TEMPLATE_FXG};
-
-#[derive(Parser)]
-pub struct Fxg {
-    #[command(subcommand)]
-    subcommand: Subcommands,
+#[derive(Default, Debug)]
+struct Args {
+    file: PathBuf,
+    flags: Vec<String>,
+    options: HashMap<String, String>,
 }
 
-#[derive(Subcommand, Debug)]
-pub enum Subcommands {
-    Build {
-        folder: Option<PathBuf>,
-    },
-
-    #[cfg(feature = "developer")]
-    New {
-        folder: String,
-    },
-
-    #[cfg(feature = "developer")]
-    Page {
-        name: String,
-        path: Option<PathBuf>,
-    },
-
-    #[cfg(feature = "contributor")]
-    VomitDebug {
-        file: String,
-        #[arg(short, long)]
-        output: String,
-    },
+#[macro_export]
+macro_rules! escape {
+    ($item:ident) => {
+        $crate::UNICODE_PLACEHOLDERS.get($item).unwrap()
+    };
+    ($item:literal) => {
+        $crate::UNICODE_PLACEHOLDERS.get($item).unwrap()
+    };
 }
 
-fn do_cli(args: Subcommands) -> Result<(), Error> {
-    use Subcommands::*;
-    match args {
-        Build { folder } => {
-            let path = folder.unwrap_or(current_dir()?);
-            let _ = build(Project::from_dir(path.clone())?)?;
-            println!(
-                "{} project {} ({})",
-                "Building".bold().green(),
-                &path
-                    .iter()
-                    .last()
-                    .ok_or(Error::PathDisplay)?
-                    .to_str()
-                    .ok_or(Error::PathDisplay)?,
-                &path.as_os_str().to_str().ok_or(Error::PathDisplay)?
-            );
-            Ok(())
+static UNICODE_PLACEHOLDERS: phf::Map<&'static str, &'static str> = phf_map! {
+    "//" => "\u{E001}",
+    ">" => "\u{E002}",
+    "<" => "\u{E003}",
+    "__" => "\u{E004}",
+    "!!" => "\u{E005}",
+    "</>" => "\u{E006}",
+    "\"" => "\u{E007}",
+    "\\" => "\u{E008}"
+};
+
+#[inline]
+fn warn<T>(msg: &T)
+where
+    T: Display + ?Sized,
+{
+    eprintln!("fxg: {}: {}", "Warn".yellow().bold(), msg);
+}
+
+#[inline]
+fn error<T>(msg: &T, code: i32) -> !
+where
+    T: Display + ?Sized,
+{
+    eprintln!("fxg: {}: {}", "Error".red().bold(), msg);
+    exit(code)
+}
+
+fn parse_args() -> Args {
+    let mut cli_args = args().skip(1);
+    let mut args = Args::default();
+    let input_file = match cli_args.next() {
+        Some(file) => file,
+        None => error("Input file not provided", 1),
+    };
+    args.file = PathBuf::from(input_file);
+    for arg in cli_args {
+        if arg.starts_with("--") {
+            if let Some((key, value)) = arg.split_once("=") {
+                args.options.insert(key[2..].to_string(), value.to_string());
+            } else {
+                warn(&format!(
+                    "Argument {} was not able to be parsed, ignoring...",
+                    arg
+                ));
+                continue;
+            }
+        } else if arg.starts_with("-") {
+            args.flags.push(arg[1..].to_string());
+        } else {
+            warn(&format!(
+                "Argument {} was not able to be parsed, ignoring...",
+                arg
+            ));
+
+            continue;
         }
-
-        #[cfg(feature = "developer")]
-        New { folder } => {
-            let mut path = current_dir()?;
-            path.push(&folder);
-            project::new(path)?;
-            println!("{} new project ({})", "Created".bold().green(), folder);
-            Ok(())
-        }
-
-        #[cfg(feature = "developer")]
-        Page { name, path } => {
-            let folder = path.unwrap_or(current_dir()?);
-            let project = Project::from_dir(folder.clone())?;
-            let mut dest_page = project.src_dir();
-            dest_page.push(&name);
-            let header = DocumentHeader {
-                title: name,
-                ..Default::default()
-            };
-            dest_page.set_extension("fxg");
-            let mut dest_page_f = File::create(dest_page)?;
-            dest_page_f.write_all(
-                TEMPLATE_FXG
-                    .replace("{{HEADER}}", &serde_yaml::to_string(&header)?)
-                    .as_bytes(),
-            )?;
-
-            Ok(())
-        }
-
-        #[cfg(feature = "contributor")]
-        VomitDebug { file, output } => compiler::vomit_debug(&file, &output),
     }
+    return args;
 }
 
 fn main() {
-    let args = Fxg::parse().subcommand;
-    if let Err(e) = do_cli(args) {
-        println!("{}", e);
-        exit(-1);
-    }
+    let args = parse_args();
+    let source_file = match File::open(args.file) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!(
+                "{}: Input file wasn't able to be opened ({})",
+                "Error".bold().red(),
+                e.black()
+            );
+            exit(2);
+        }
+    };
+    let mut reader = BufReader::new(source_file);
+    let output = crate::parser::parse(&mut reader);
+    print!("{output}");
 }
