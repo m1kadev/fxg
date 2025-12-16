@@ -1,4 +1,6 @@
 // TODO: macro for repeated push_str calls
+// TODO: use String::write_tag* functions
+// TODO: general cleanup & optimize
 
 use std::{
     collections::HashSet,
@@ -165,6 +167,10 @@ where
                     output.push(' ');
                     last_line_was_title = false;
                 }
+            } else {
+                output.push_str(&parse_text(line));
+                output.push(' ');
+                last_line_was_title = false;
             }
         }
         lnbuf.clear();
@@ -306,12 +312,13 @@ pub fn parse_text(line: &str) -> String {
     let mut output = String::new();
     // find opening tag
     let cursive = line.find("//");
+    let small = line.find("??");
     let bold = line.find("!!");
     let underline = line.find("__");
     let code = line.find("<>");
     let link = line.find("<#");
     let image = line.find("<!");
-    let smallest = [cursive, bold, underline, code, link, image]
+    let smallest = [cursive, bold, underline, code, link, image, small]
         .iter()
         .filter(|x| x.is_some())
         .map(|x| x.unwrap())
@@ -330,6 +337,12 @@ pub fn parse_text(line: &str) -> String {
             let text = &line[idx + 2..];
             output.push_str(&line[..idx]);
             output.push_str(&parse_markup(text, "!!", "strong"));
+        } else if smallest == small {
+            dbg!(line);
+            let idx = smallest.unwrap();
+            let text = &line[idx + 2..];
+            output.push_str(&line[..idx]);
+            output.push_str(&parse_markup(text, "??", "small"));
         } else if smallest == underline {
             let idx = smallest.unwrap();
             let text = &line[idx + 2..];
