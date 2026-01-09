@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap, env::args, fmt::Display, fs::File, io::BufReader, path::PathBuf,
+    collections::HashMap, env::args, fmt::Display, fs::File, io::{self, BufReader, Read}, path::PathBuf,
     process::exit,
 };
 
@@ -16,7 +16,7 @@ mod test;
 
 #[derive(Default, Debug)]
 struct Args {
-    file: PathBuf,
+    file: String,
     flags: Vec<String>,
     options: HashMap<String, String>,
 }
@@ -66,7 +66,7 @@ fn parse_args() -> Args {
         Some(file) => file,
         None => error("Input file not provided", 1),
     };
-    args.file = PathBuf::from(input_file);
+    args.file = input_file;
     for arg in cli_args {
         if arg.starts_with("--") {
             if let Some((key, value)) = arg.split_once("=") {
@@ -94,18 +94,28 @@ fn parse_args() -> Args {
 
 fn main() {
     let args = parse_args();
-    let source_file = match File::open(args.file) {
-        Ok(v) => v,
-        Err(e) => {
-            eprintln!(
-                "{}: Input file wasn't able to be opened ({})",
-                "Error".bold().red(),
-                e.black()
-            );
-            exit(2);
-        }
-    };
-    let mut reader = BufReader::new(source_file);
-    let output = crate::parser::parse(&mut reader);
-    print!("{output}");
+    if args.file == "-" {
+        // read from stdio
+        let mut stdin = std::io::stdin();
+        let mut data: Vec<u8> = vec![];
+        stdin.read_to_end(&mut data);
+        let mut buf_reader = BufReader::new(data.as_slice());
+        let output = crate::parser::parse(&mut buf_reader);
+        print!("{output}");
+    } else {
+        let source_file = match File::open(args.file) {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!(
+                    "{}: Input file wasn't able to be opened ({})",
+                    "Error".bold().red(),
+                    e.black()
+                );
+                exit(2);
+            }
+        };
+        let mut reader = BufReader::new(source_file);
+        let output = crate::parser::parse(&mut reader);
+        print!("{output}");
+    }
 }
