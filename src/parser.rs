@@ -338,7 +338,6 @@ pub fn parse_text(line: &str) -> String {
             output.push_str(&line[..idx]);
             output.push_str(&parse_markup(text, "!!", "strong"));
         } else if smallest == small {
-            dbg!(line);
             let idx = smallest.unwrap();
             let text = &line[idx + 2..];
             output.push_str(&line[..idx]);
