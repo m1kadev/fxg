@@ -1,9 +1,6 @@
 [package]
 name = "fxg"
-version = "1.0.0"
+version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-owo-colors = "4.2.3"
-phf = "0.13.1"
-phf_macros = "0.13.1"
