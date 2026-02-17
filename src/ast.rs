@@ -15,12 +15,13 @@ pub enum AstNode {
     Bold(Vec<AstNode>),
     Underline(Vec<AstNode>),
     Deemphasised(Vec<AstNode>),
+    Space,
 }
 
 #[derive(Default, Debug)]
 pub struct Ast(pub Vec<AstNode>);
 
-pub fn build_ast(lex: Vec<lexer::LexData>, source: &str) -> Ast {
+pub fn build_ast(lex: Vec<lexer::LexData>) -> Ast {
     let mut ast = Ast::default();
 
     let mut peekable = lex.into_iter().peekable();
@@ -35,12 +36,14 @@ pub fn build_ast(lex: Vec<lexer::LexData>, source: &str) -> Ast {
 fn parse_paragraph(lexer: &mut Lexer)  -> AstNode {
     let mut collector = vec![];
     loop {
-        collector.append(&mut parse_text(lexer));
-        if let Some((lexer::Lexeme::Newline, _)) = lexer.next() {
+        let mut text = parse_text(lexer);
+        collector.append(&mut text);
+        if let Some((lexer::Lexeme::Newline, _)) = lexer.peek() {
             break;
-        } else if let None = lexer.next() {
+        } else if let None = lexer.peek() {
             break;
         }
+        collector.push(AstNode::Space);
     }
 
     AstNode::Paragraph(collector)
@@ -49,13 +52,131 @@ fn parse_paragraph(lexer: &mut Lexer)  -> AstNode {
 fn parse_text(lexer: &mut Lexer) -> Vec<AstNode> {
     let mut collector = vec![];
     while let Some((lexeme, range)) = lexer.next() {
-        let node = match lexeme {
+        match lexeme {
             lexer::Lexeme::Newline => break,
-            lexer::Lexeme::Text => AstNode::Text(range.clone()),
+            lexer::Lexeme::Text => collector.push(AstNode::Text(range.clone())),
+            lexer::Lexeme::Cursive => collector.append(&mut parse_cursive(lexer, range)),
+            lexer::Lexeme::Bold => collector.append(&mut parse_bold(lexer, range)),
+            lexer::Lexeme::Underline => collector.append(&mut parse_underline(lexer, range)),
+            lexer::Lexeme::Deemphasised => collector.append(&mut parse_deemphasised(lexer, range)),
             _ => todo!(),
         };
-        collector.push(node);
     }
-    collector
+    return collector 
 }
 
+fn parse_cursive(lexer: &mut Lexer, cursive_pos: Range) -> Vec<AstNode> {
+    let mut collector = vec![];
+    while let Some((lexeme, b_range)) = lexer.peek() {
+        let range = b_range.clone(); 
+        let node = match lexeme {
+            lexer::Lexeme::Text => collector.push(AstNode::Text(range)),
+            lexer::Lexeme::Newline => {
+                collector.insert(0, AstNode::Text(cursive_pos));
+                lexer.next();
+                return collector;
+            },
+            lexer::Lexeme::Cursive => {
+                lexer.next();
+                break;
+            },
+            lexer::Lexeme::Bold => collector.append(&mut parse_bold(lexer, range)),
+            lexer::Lexeme::Deemphasised => collector.append(&mut parse_deemphasised(lexer, range)),
+            lexer::Lexeme::Underline => collector.append(&mut parse_underline(lexer, range)),
+            _ => todo!(),
+        };
+        lexer.next();
+    }
+    if let None = lexer.peek() {
+        collector.insert(0, AstNode::Text(cursive_pos));
+        return collector;
+    }
+    vec![AstNode::Cursive(collector)]
+}
+
+fn parse_bold(lexer: &mut Lexer, cursive_pos: Range) -> Vec<AstNode> {
+    let mut collector = vec![];
+    while let Some((lexeme, b_range)) = lexer.peek() {
+        let range = b_range.clone(); 
+        match lexeme {
+            lexer::Lexeme::Text => collector.push(AstNode::Text(range)),
+            lexer::Lexeme::Newline => {
+                collector.insert(0, AstNode::Text(cursive_pos));
+                lexer.next();
+                return collector;
+            },
+            lexer::Lexeme::Bold => {
+                lexer.next();
+                break;
+            },
+            lexer::Lexeme::Cursive => collector.append(&mut parse_cursive(lexer, range)),
+            lexer::Lexeme::Deemphasised => collector.append(&mut parse_deemphasised(lexer, range)),
+            lexer::Lexeme::Underline => collector.append(&mut parse_underline(lexer, range)),
+            _ => todo!(),
+        };
+        lexer.next();
+    }
+    if let None = lexer.peek() {
+        collector.insert(0, AstNode::Text(cursive_pos));
+        return collector;
+    }
+    vec![AstNode::Bold(collector)]
+}
+
+fn parse_underline(lexer: &mut Lexer, cursive_pos: Range) -> Vec<AstNode> {
+    let mut collector = vec![];
+    while let Some((lexeme, b_range)) = lexer.peek() {
+        let range = b_range.clone();
+            match lexeme {
+            lexer::Lexeme::Text => collector.push(AstNode::Text(range)),
+            lexer::Lexeme::Newline => {
+                collector.insert(0, AstNode::Text(cursive_pos));
+                lexer.next();
+                return collector;
+            },
+            lexer::Lexeme::Underline => {
+                lexer.next();
+                break;
+            },
+            lexer::Lexeme::Cursive => collector.append(&mut parse_cursive(lexer, range)),
+            lexer::Lexeme::Deemphasised => collector.append(&mut parse_deemphasised(lexer, range)),
+            lexer::Lexeme::Bold => collector.append(&mut parse_bold(lexer, range)),
+            _ => todo!(),
+        };
+        lexer.next();
+    }
+    if let None = lexer.peek() {
+        collector.insert(0, AstNode::Text(cursive_pos));
+        return collector;
+    }
+    vec![AstNode::Underline(collector)]
+}
+
+fn parse_deemphasised(lexer: &mut Lexer, cursive_pos: Range) -> Vec<AstNode> {
+    let mut collector = vec![];
+    while let Some((lexeme, b_range)) = lexer.peek() {
+        let range = b_range.clone();
+        match lexeme {
+            lexer::Lexeme::Text => collector.push(AstNode::Text(range)),
+            lexer::Lexeme::Newline => {
+                collector.insert(0, AstNode::Text(cursive_pos));
+                lexer.next();
+                return collector;
+            },
+            lexer::Lexeme::Deemphasised => {
+                lexer.next();
+                break;
+            },
+            lexer::Lexeme::Cursive => collector.append(&mut parse_cursive(lexer, range)),
+            lexer::Lexeme::Underline => collector.append(&mut parse_underline(lexer, range)),
+            lexer::Lexeme::Bold => collector.append(&mut parse_bold(lexer, range)),
+            _ => todo!(),
+        };
+        lexer.next();
+    }
+    if let None = lexer.peek() {
+        collector.insert(0, AstNode::Text(cursive_pos));
+        return collector;
+    }
+    vec![AstNode::Deemphasised(collector)]
+}

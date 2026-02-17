@@ -23,9 +23,8 @@ fn main() {
     };
     
     let lex = lexer::lex(&source);
-    dbg!("{:?}", &lex);
-    let ast = ast::build_ast(lex, &source);
-    dbg!("{:?}", &ast);
-    trans::translate(ast, &source);
-
+    let ast = ast::build_ast(lex);
+    //dbg!(&ast);
+    let output = trans::translate(ast, &source);
+    print!("{}", output);
 }
